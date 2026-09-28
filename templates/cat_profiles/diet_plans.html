@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ cat.name }}'s Diet Plans - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .diet-plan-card {
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .diet-plan-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        border-color: var(--primary-color);
+    }
+    
+    .diet-plan-card.active {
+        background: linear-gradient(135deg, rgba(40,167,69,0.1), rgba(40,167,69,0.05));
+        border-color: #28a745;
+    }
+    
+    .food-item {
+        background: rgba(255,255,255,0.8);
+        border-radius: 10px;
+        padding: 0.5rem;
+        margin: 0.25rem 0;
+        border-left: 3px solid var(--primary-color);
+    }
+    
+    .schedule-item {
+        background: rgba(255,193,7,0.1);
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin: 0.25rem 0;
+        border-left: 3px solid #ffc107;
+    }
+    
+    .cat-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .cat-avatar-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cat Header -->
+    <div class="cat-header">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                {% if cat.photo %}
+                    <img src="{{ cat.photo.url }}" alt="{{ cat.name }}" class="cat-avatar-large">
+                {% else %}
+                    <div class="cat-avatar-large bg-white d-flex align-items-center justify-content-center mx-auto">
+                        <i class="fas fa-cat" style="color: var(--primary-color); font-size: 2rem;"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <h1><i class="fas fa-utensils"></i> {{ cat.name }}'s Diet Plans</h1>
+                <p class="mb-0">Manage nutrition and feeding schedules for {{ cat.name }}</p>
+            </div>
+            <div class="col-md-2 text-end">
+                <a href="{% url 'cat_profiles:add_diet_plan' cat.id %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus"></i> Add Plan
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'cat_profiles:list' %}">Cats</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'cat_profiles:detail' cat.id %}">{{ cat.name }}</a></li>
+                            <li class="breadcrumb-item active">Diet Plans</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'cat_profiles:detail' cat.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if diet_plans %}
+    <div class="row">
+        {% for plan in diet_plans %}
+        <div class="col-lg-6 mb-4">
+            <div class="card diet-plan-card h-100 {% if plan.is_active %}active{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> {{ plan.title }}
+                        {% if plan.is_active %}
+                            <span class="badge bg-success ms-2">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary ms-2">Inactive</span>
+                        {% endif %}
+                    </h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="togglePlanStatus({{ plan.id }}, {{ plan.is_active|yesno:'false,true' }})">
+                                <i class="fas fa-toggle-{% if plan.is_active %}off{% else %}on{% endif %}"></i> 
+                                {% if plan.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </a></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deletePlan({{ plan.id }})">
+                                <i class="fas fa-trash"></i> Delete
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">{{ plan.description }}</p>
+                    
+                    <!-- Food Items -->
+                    {% if plan.food_items %}
+                    <h6><i class="fas fa-fish"></i> Food Items</h6>
+                    <div class="mb-3">
+                        {% for item in plan.food_items %}
+                        <div class="food-item">
+                            <div class="d-flex justify-content-between">
+                                <span><strong>{{ item.name }}</strong></span>
+                                <span class="text-muted">{{ item.quantity }}</span>
+                            </div>
+                            {% if item.notes %}
+                                <small class="text-muted">{{ item.notes }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Feeding Schedule -->
+                    {% if plan.feeding_schedule %}
+                    <h6><i class="fas fa-clock"></i> Feeding Schedule</h6>
+                    <div class="mb-3">
+                        {% for schedule in plan.feeding_schedule %}
+                        <div class="schedule-item">
+                            <div class="d-flex justify-content-between">
+                                <span><strong>{{ schedule.time }}</strong></span>
+                                <span class="text-muted">{{ schedule.food }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Notes -->
+                    {% if plan.notes %}
+                    <h6><i class="fas fa-sticky-note"></i> Notes</h6>
+                    <p class="text-muted small">{{ plan.notes }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted">
+                    <small>
+                        <i class="fas fa-calendar-plus"></i> Created {{ plan.created_at|timesince }} ago
+                        {% if plan.updated_at != plan.created_at %}
+                            | Updated {{ plan.updated_at|timesince }} ago
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-utensils fa-4x text-muted mb-3"></i>
+                    <h4>No Diet Plans Yet</h4>
+                    <p class="text-muted">Create a diet plan to track {{ cat.name }}'s nutrition and feeding schedule.</p>
+                    <a href="{% url 'cat_profiles:add_diet_plan' cat.id %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus"></i> Create First Diet Plan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function togglePlanStatus(planId, newStatus) {
+    if (confirm(`${newStatus ? 'Activate' : 'Deactivate'} this diet plan?`)) {
+        // This would need a backend endpoint to handle plan status changes
+        alert('Feature coming soon! Plan status toggle will be implemented.');
+    }
+}
+
+function deletePlan(planId) {
+    if (confirm('Are you sure you want to delete this diet plan? This action cannot be undone.')) {
+        // This would need a backend endpoint to handle plan deletion
+        alert('Feature coming soon! Plan deletion will be implemented.');
+    }
+}
+</script>
+{% endblock %}

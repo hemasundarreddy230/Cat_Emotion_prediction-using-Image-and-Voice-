@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Emotion History - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .history-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .filter-panel {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .prediction-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        border-left: 4px solid #667eea;
+    }
+
+    .prediction-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .emotion-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .emotion-happy { background: #d4edda; color: #155724; }
+    .emotion-sad { background: #f8d7da; color: #721c24; }
+    .emotion-angry { background: #f5c6cb; color: #721c24; }
+    .emotion-calm { background: #d1ecf1; color: #0c5460; }
+    .emotion-playful { background: #fff3cd; color: #856404; }
+    .emotion-scared { background: #e2e3e5; color: #383d41; }
+
+    .confidence-bar {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+    }
+
+    .prediction-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 2px solid #e9ecef;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .stats-label {
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .no-data {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        padding: 3rem;
+    }
+
+    .btn-filter {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-filter:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="text-center">
+            <h1><i class="fas fa-history me-2"></i>Emotion Detection History</h1>
+            <p class="mb-0">Track your cats' emotional patterns over time</p>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ predictions.count }}</div>
+                <div class="stats-label">Total Predictions</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ user_cats.count }}</div>
+                <div class="stats-label">Cats Monitored</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">7</div>
+                <div class="stats-label">Days Active</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">85%</div>
+                <div class="stats-label">Avg Confidence</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <div class="row align-items-end">
+            <div class="col-md-3">
+                <label for="catFilter" class="form-label">Filter by Cat</label>
+                <select class="form-control" id="catFilter">
+                    <option value="">All Cats</option>
+                    {% for cat in user_cats %}
+                        <option value="{{ cat.id }}" {% if selected_cat_id == cat.id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="emotionFilter" class="form-label">Filter by Emotion</label>
+                <select class="form-control" id="emotionFilter">
+                    <option value="">All Emotions</option>
+                    <option value="happy">Happy</option>
+                    <option value="sad">Sad</option>
+                    <option value="angry">Angry</option>
+                    <option value="calm">Calm</option>
+                    <option value="playful">Playful</option>
+                    <option value="scared">Scared</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="dateRange" class="form-label">Date Range</label>
+                <select class="form-control" id="dateRange">
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 3 months</option>
+                    <option value="365">Last year</option>
+                    <option value="all">All time</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-filter w-100" id="applyFilters">
+                    <i class="fas fa-filter me-1"></i>Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictions List -->
+    <div class="history-container">
+        <h3 class="mb-4">Recent Predictions</h3>
+        
+        <div id="predictionsList">
+            {% if predictions %}
+                {% for prediction in predictions %}
+                    <div class="prediction-card">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                {% if prediction.image %}
+                                    <img src="{{ prediction.image.url }}" alt="Prediction image" class="prediction-image">
+                                {% else %}
+                                    <div class="prediction-image d-flex align-items-center justify-content-center" style="background: #f8f9fa;">
+                                        <i class="fas fa-cat fa-2x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h5 class="mb-1">{{ prediction.cat.name }}</h5>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>{{ prediction.created_at|timesince }} ago
+                                        </small>
+                                    </div>
+                                    <div class="emotion-badge emotion-{{ prediction.predicted_emotion|lower }}">
+                                        {{ prediction.predicted_emotion }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">Confidence: {{ prediction.confidence|floatformat:1 }}%</small>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: {{ prediction.confidence }}%"></div>
+                                    </div>
+                                </div>
+                                
+                                {% if prediction.notes %}
+                                    <p class="mb-1 text-muted">
+                                        <i class="fas fa-sticky-note me-1"></i>{{ prediction.notes|truncatewords:15 }}
+                                    </p>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-{{ prediction.prediction_type|default:'image' }} me-1"></i>
+                                        {{ prediction.get_prediction_type_display|default:'Image Detection' }}
+                                    </small>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="viewDetails({{ prediction.id }})">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="shareResult({{ prediction.id }})">
+                                            <i class="fas fa-share"></i> Share
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">
+                    <i class="fas fa-chart-line fa-3x mb-3"></i>
+                    <h4>No predictions found</h4>
+                    <p>Start detecting your cats' emotions to see history here.</p>
+                    <a href="{% url 'emotion_detection:detection' %}" class="btn btn-filter">
+                        <i class="fas fa-camera me-1"></i>Start Detection
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const catFilter = document.getElementById('catFilter');
+    const emotionFilter = document.getElementById('emotionFilter');
+    const dateRange = document.getElementById('dateRange');
+
+    // Apply filters
+    applyFiltersBtn.addEventListener('click', function() {
+        const params = new URLSearchParams();
+        
+        if (catFilter.value) params.append('cat', catFilter.value);
+        if (emotionFilter.value) params.append('emotion', emotionFilter.value);
+        if (dateRange.value !== 'all') params.append('days', dateRange.value);
+        
+        const url = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.location.href = url;
+    });
+
+    // Quick filter buttons
+    document.querySelectorAll('.emotion-badge').forEach(badge => {
+        badge.style.cursor = 'pointer';
+        badge.addEventListener('click', function() {
+            const emotion = this.textContent.trim().toLowerCase();
+            emotionFilter.value = emotion;
+            applyFiltersBtn.click();
+        });
+    });
+});
+
+function viewDetails(predictionId) {
+    // In a real implementation, this would open a modal or navigate to a detail page
+    alert(`Viewing details for prediction ${predictionId}`);
+}
+
+function shareResult(predictionId) {
+    // In a real implementation, this would open a share dialog
+    if (navigator.share) {
+        navigator.share({
+            title: 'Cat Emotion Detection Result',
+            text: 'Check out my cat\'s emotion detection result!',
+            url: window.location.href
+        });
+    } else {
+        // Fallback for browsers that don't support Web Share API
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        });
+    }
+}
+
+// Animate confidence bars on load
+document.querySelectorAll('.confidence-fill').forEach(bar => {
+    const width = bar.style.width;
+    bar.style.width = '0%';
+    setTimeout(() => {
+        bar.style.width = width;
+    }, 100);
+});
+</script>
+{% endblock %}

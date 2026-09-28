@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+
+{% block title %}Community Groups - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .group-card {
+        transition: all 0.3s ease;
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .group-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .group-cover {
+        height: 200px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .group-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .group-type-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--primary-color);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .group-stats {
+        display: flex;
+        justify-content: space-around;
+        padding: 1rem 0;
+        background: rgba(0,0,0,0.05);
+        margin-top: 1rem;
+        border-radius: 10px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    .user-groups-section {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(240, 147, 251, 0.1));
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .search-filters {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .filter-btn {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 25px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 0.875rem;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+        background: var(--primary-gradient);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .create-group-btn {
+        background: var(--success-gradient);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .create-group-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-500);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 2rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 style="color:#fff !important;">
+                
+                <i class="fas fa-users text-primary"></i>
+                Community Groups
+            </h1>
+            <a href="{% url 'prediction_service:create_group' %}" class="create-group-btn">
+                <i class="fas fa-plus"></i> Create Group
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- User's Groups -->
+{% if user_groups %}
+<div class="user-groups-section">
+    <h3 class="mb-4">
+        <i class="fas fa-heart text-danger me-2"></i>
+        Your Groups ({{ user_groups.count }})
+    </h3>
+    <div class="row">
+        {% for group in user_groups %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card group-card h-100">
+                <div class="group-cover">
+                    {% if group.cover_image %}
+                        <img src="{{ group.cover_image.url }}" alt="{{ group.name }}">
+                    {% else %}
+                        <i class="fas fa-users"></i>
+                    {% endif %}
+                    <div class="group-type-badge">{{ group.get_group_type_display }}</div>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title fw-bold">{{ group.name }}</h6>
+                    <p class="card-text text-muted small">{{ group.description|truncatewords:15 }}</p>
+                    <div class="group-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">{{ group.members_count }}</div>
+                            <div class="stat-label">Members</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">{{ group.posts_count }}</div>
+                            <div class="stat-label">Posts</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'prediction_service:group_detail' group.id %}" class="btn btn-primary w-100">
+                        <i class="fas fa-eye me-2"></i>View Group
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Search and Filters -->
+<div class="search-filters">
+    <form method="GET" class="row align-items-end">
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Search Groups</label>
+            <input type="text" name="search" class="form-control" placeholder="Search by name or description..." value="{{ search_query }}">
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Filter by Type</label>
+            <select name="type" class="form-select">
+                <option value="">All Types</option>
+                {% for type_key, type_label in group_types %}
+                    <option value="{{ type_key }}" {% if current_type == type_key %}selected{% endif %}>
+                        {{ type_label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 mb-3">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-search me-2"></i>Search
+            </button>
+        </div>
+    </form>
+    
+    <!-- Quick Filters -->
+    <div class="mt-3">
+        <strong class="me-3">Quick Filters:</strong>
+        <a href="{% url 'prediction_service:groups_list' %}" class="filter-btn {% if not current_type %}active{% endif %}">All</a>
+        {% for type_key, type_label in group_types %}
+            <a href="?type={{ type_key }}" class="filter-btn {% if current_type == type_key %}active{% endif %}">{{ type_label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- All Groups -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-4">
+            <i class="fas fa-globe text-info me-2"></i>
+            Discover Groups
+            {% if search_query %}
+                <small class="text-muted">- Results for "{{ search_query }}"</small>
+            {% endif %}
+        </h3>
+    </div>
+</div>
+
+{% if groups %}
+<div class="row">
+    {% for group in groups %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card group-card h-100">
+            <div class="group-cover">
+                {% if group.cover_image %}
+                    <img src="{{ group.cover_image.url }}" alt="{{ group.name }}">
+                {% else %}
+                    <i class="fas fa-users"></i>
+                {% endif %}
+                <div class="group-type-badge">{{ group.get_group_type_display }}</div>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title fw-bold">{{ group.name }}</h5>
+                <p class="card-text text-muted">{{ group.description|truncatewords:20 }}</p>
+                <div class="group-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ group.members_count }}</div>
+                        <div class="stat-label">Members</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ group.posts_count }}</div>
+                        <div class="stat-label">Posts</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ group.created_at|timesince|truncatewords:1 }}</div>
+                        <div class="stat-label">Created</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'prediction_service:group_detail' group.id %}" class="btn btn-primary w-100">
+                    <i class="fas fa-eye me-2"></i>View Group
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if groups.has_other_pages %}
+<nav aria-label="Groups pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if groups.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ groups.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        {% endif %}
+        
+        {% for num in groups.paginator.page_range %}
+            {% if groups.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > groups.number|add:'-3' and num < groups.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if groups.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ groups.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-users"></i>
+    <h4>No Groups Found</h4>
+    {% if search_query %}
+        <p>No groups match your search criteria. Try different keywords or browse all groups.</p>
+        <a href="{% url 'prediction_service:groups_list' %}" class="btn btn-primary">
+            <i class="fas fa-globe me-2"></i>Browse All Groups
+        </a>
+    {% else %}
+        <p>Be the first to create a community group for cat lovers!</p>
+        <a href="{% url 'prediction_service:create_group' %}" class="btn btn-success btn-lg">
+            <i class="fas fa-plus me-2"></i>Create First Group
+        </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add staggered animation to group cards
+    const cards = document.querySelectorAll('.group-card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

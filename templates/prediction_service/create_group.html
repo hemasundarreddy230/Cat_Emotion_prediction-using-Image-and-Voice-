@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Group - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-form-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        padding: 3rem;
+        margin: 2rem 0;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 16px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .form-section h5 {
+        color: var(--primary-color);
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.75rem;
+    }
+
+    .group-type-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .type-card {
+        background: white;
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .type-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .type-card.selected {
+        border-color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .type-card input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .type-card i {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .type-card h6 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .type-card p {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin: 0;
+    }
+
+    .image-upload-area {
+        border: 2px dashed var(--gray-300);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .image-upload-area:hover {
+        border-color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .image-upload-area.dragover {
+        border-color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 12px;
+        margin-top: 1rem;
+    }
+
+    .privacy-toggle {
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid var(--gray-300);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .privacy-option {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .privacy-option:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .privacy-option input[type="radio"] {
+        margin-right: 1rem;
+    }
+
+    .create-btn {
+        background: var(--success-gradient);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 1rem 3rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .create-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        color: white;
+    }
+
+    .cancel-btn {
+        background: var(--gray-500);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .cancel-btn:hover {
+        background: var(--gray-600);
+        color: white;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="create-form-container">
+            <div class="text-center mb-4">
+                <h1 class="display-5 mb-3">
+                    <i class="fas fa-plus-circle text-success"></i>
+                    Create New Group
+                </h1>
+                <p class="lead text-muted">Build a community for cat lovers to connect and share experiences</p>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" id="createGroupForm">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Group Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="e.g., Persian Cat Lovers, NYC Cat Owners">
+                        <div class="form-text">Choose a descriptive name that reflects your group's purpose</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required
+                                  placeholder="Describe what your group is about, what members can expect, and any rules or guidelines..."></textarea>
+                        <div class="form-text">Help people understand what your group is about (max 500 characters)</div>
+                    </div>
+                </div>
+
+                <!-- Group Type -->
+                <div class="form-section">
+                    <h5><i class="fas fa-tags me-2"></i>Group Type</h5>
+                    <p class="text-muted mb-3">Select the category that best describes your group</p>
+                    
+                    <div class="group-type-cards">
+                        {% for type_key, type_label in group_types %}
+                        <div class="type-card" data-type="{{ type_key }}">
+                            <input type="radio" name="group_type" value="{{ type_key }}" id="type_{{ type_key }}">
+                            <i class="fas fa-{% if type_key == 'breed' %}paw{% elif type_key == 'location' %}map-marker-alt{% elif type_key == 'interest' %}heart{% elif type_key == 'health' %}stethoscope{% else %}users{% endif %}"></i>
+                            <h6>{{ type_label }}</h6>
+                            <p>
+                                {% if type_key == 'breed' %}
+                                    Connect with owners of specific cat breeds
+                                {% elif type_key == 'location' %}
+                                    Meet cat owners in your local area
+                                {% elif type_key == 'interest' %}
+                                    Share common interests and hobbies
+                                {% elif type_key == 'health' %}
+                                    Support for health-related concerns
+                                {% else %}
+                                    General discussions and community
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Cover Image -->
+                <div class="form-section">
+                    <h5><i class="fas fa-image me-2"></i>Cover Image (Optional)</h5>
+                    <p class="text-muted mb-3">Add a cover image to make your group more appealing</p>
+                    
+                    <div class="image-upload-area" id="imageUploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h6>Click to upload or drag and drop</h6>
+                        <p class="text-muted mb-0">PNG, JPG up to 5MB</p>
+                        <input type="file" id="cover_image" name="cover_image" accept="image/*" style="display: none;">
+                        <img id="imagePreview" class="image-preview" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Privacy Settings -->
+                <div class="form-section">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Privacy Settings</h5>
+                    
+                    <div class="privacy-toggle">
+                        <div class="privacy-option">
+                            <input type="radio" name="privacy" value="public" id="privacy_public" checked>
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="fas fa-globe text-success me-2"></i>Public Group
+                                </h6>
+                                <p class="text-muted mb-0">Anyone can find and join this group</p>
+                            </div>
+                        </div>
+                        <div class="privacy-option">
+                            <input type="radio" name="privacy" value="private" id="privacy_private">
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="fas fa-lock text-warning me-2"></i>Private Group
+                                </h6>
+                                <p class="text-muted mb-0">Only invited members can join</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden field for form processing -->
+                    <input type="hidden" name="is_public" id="is_public" value="on">
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="text-center mt-4">
+                    <a href="{% url 'prediction_service:groups_list' %}" class="cancel-btn me-3">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="create-btn">
+                        <i class="fas fa-plus me-2"></i>Create Group
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Group type selection
+    const typeCards = document.querySelectorAll('.type-card');
+    typeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selected class from all cards
+            typeCards.forEach(c => c.classList.remove('selected'));
+            
+            // Add selected class to clicked card
+            this.classList.add('selected');
+            
+            // Check the radio button
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+        });
+    });
+
+    // Image upload handling
+    const uploadArea = document.getElementById('imageUploadArea');
+    const fileInput = document.getElementById('cover_image');
+    const imagePreview = document.getElementById('imagePreview');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleImagePreview(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleImagePreview(e.target.files[0]);
+        }
+    });
+
+    function handleImagePreview(file) {
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Privacy settings
+    const privacyRadios = document.querySelectorAll('input[name="privacy"]');
+    const isPublicField = document.getElementById('is_public');
+    
+    privacyRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            isPublicField.value = this.value === 'public' ? 'on' : '';
+        });
+    });
+
+    // Form validation
+    const form = document.getElementById('createGroupForm');
+    form.addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const groupType = document.querySelector('input[name="group_type"]:checked');
+
+        if (!name) {
+            e.preventDefault();
+            alert('Please enter a group name');
+            return;
+        }
+
+        if (!description) {
+            e.preventDefault();
+            alert('Please enter a group description');
+            return;
+        }
+
+        if (!groupType) {
+            e.preventDefault();
+            alert('Please select a group type');
+            return;
+        }
+
+        if (description.length > 500) {
+            e.preventDefault();
+            alert('Description must be 500 characters or less');
+            return;
+        }
+    });
+
+    // Character counter for description
+    const descriptionField = document.getElementById('description');
+    const charCounter = document.createElement('div');
+    charCounter.className = 'form-text text-end';
+    charCounter.style.marginTop = '0.5rem';
+    descriptionField.parentNode.appendChild(charCounter);
+
+    function updateCharCounter() {
+        const remaining = 500 - descriptionField.value.length;
+        charCounter.textContent = `${remaining} characters remaining`;
+        charCounter.style.color = remaining < 50 ? '#dc3545' : '#6c757d';
+    }
+
+    descriptionField.addEventListener('input', updateCharCounter);
+    updateCharCounter();
+});
+</script>
+{% endblock %}

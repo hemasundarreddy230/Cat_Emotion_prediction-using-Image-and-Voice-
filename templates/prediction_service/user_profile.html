@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }} - Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 25px;
+        padding: 3rem 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 5px solid white;
+        margin-bottom: 1rem;
+        object-fit: cover;
+    }
+
+    .profile-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .follow-btn {
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid white;
+        border-radius: 25px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+
+    .follow-btn:hover {
+        background: transparent;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .follow-btn.following {
+        background: transparent;
+        color: white;
+        border-color: white;
+    }
+
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .post-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .post-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+    }
+
+    .post-content {
+        padding: 1.5rem;
+    }
+
+    .post-meta {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .post-stats {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .emotion-tag {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+
+    .no-posts {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+
+    .no-posts i {
+        font-size: 4rem;
+        margin-bottom: 2rem;
+        color: var(--primary-color);
+    }
+
+    .tabs-nav {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .tab-btn {
+        background: none;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        margin-right: 0.5rem;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .tab-btn.active {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Header -->
+<div class="row">
+    <div class="col-12">
+        <div class="profile-header">
+            {% if profile_user.userprofile.avatar %}
+                <img src="{{ profile_user.userprofile.avatar.url }}" alt="{{ profile_user.username }}" class="profile-avatar">
+            {% else %}
+                <div class="profile-avatar bg-white d-flex align-items-center justify-content-center mx-auto">
+                    <i class="fas fa-user" style="font-size: 3rem; color: var(--primary-color);"></i>
+                </div>
+            {% endif %}
+            
+            <h2>{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+            <p class="mb-0">@{{ profile_user.username }}</p>
+            
+            {% if profile_user != user %}
+                <button class="follow-btn {% if is_following %}following{% endif %}" 
+                        onclick="toggleFollow({{ profile_user.id }})">
+                    {% if is_following %}
+                        <i class="fas fa-user-check"></i> Following
+                    {% else %}
+                        <i class="fas fa-user-plus"></i> Follow
+                    {% endif %}
+                </button>
+            {% endif %}
+            
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ posts_count }}</span>
+                    <span class="stat-label">Posts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number followers-count">{{ followers_count }}</span>
+                    <span class="stat-label">Followers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ following_count }}</span>
+                    <span class="stat-label">Following</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="row">
+    <div class="col-12">
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="showTab('posts')">
+                <i class="fas fa-th-large"></i> Posts
+            </button>
+            <button class="tab-btn" onclick="showTab('cats')">
+                <i class="fas fa-paw"></i> Cats
+            </button>
+            <button class="tab-btn" onclick="showTab('activity')">
+                <i class="fas fa-chart-line"></i> Activity
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Posts Tab -->
+<div id="posts-tab" class="tab-content active">
+    {% if posts %}
+        <div class="posts-grid">
+            {% for post in posts %}
+            <div class="post-card">
+                <img src="{{ post.image.url }}" alt="Cat photo" class="post-image">
+                <div class="post-content">
+                    <div class="post-meta">
+                        <div>
+                            <strong>{{ post.cat.name }}</strong>
+                            {% if post.location %}
+                                <br><i class="fas fa-map-marker-alt"></i> {{ post.location }}
+                            {% endif %}
+                        </div>
+                        <div class="post-stats">
+                            <span><i class="fas fa-heart"></i> {{ post.likes_count }}</span>
+                            <span><i class="fas fa-comment"></i> {{ post.comments_count }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if post.emotion_tags %}
+                        {% for emotion in post.emotion_tags %}
+                            <span class="emotion-tag">{{ emotion }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if post.caption %}
+                        <p class="mt-2">{{ post.caption }}</p>
+                    {% endif %}
+                    
+                    <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-posts">
+            <i class="fas fa-camera"></i>
+            <h4>No Posts Yet</h4>
+            <p>
+                {% if profile_user == user %}
+                    Start sharing your cat's amazing moments!
+                {% else %}
+                    {{ profile_user.username }} hasn't shared any posts yet.
+                {% endif %}
+            </p>
+            {% if profile_user == user %}
+                <a href="{% url 'prediction_service:create_post' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create First Post
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Cats Tab -->
+<div id="cats-tab" class="tab-content">
+    <div class="row">
+        {% for cat in profile_user.cats.all %}
+        <div class="col-md-6 col-lg-4">
+            <div class="post-card">
+                {% if cat.photo %}
+                    <img src="{{ cat.photo.url }}" alt="{{ cat.name }}" class="post-image">
+                {% else %}
+                    <div class="post-image bg-light d-flex align-items-center justify-content-center">
+                        <i class="fas fa-cat" style="font-size: 3rem; color: var(--primary-color);"></i>
+                    </div>
+                {% endif %}
+                <div class="post-content">
+                    <h5>{{ cat.name }}</h5>
+                    <p class="text-muted mb-2">{{ cat.breed|default:"Mixed Breed" }}</p>
+                    <p class="mb-2">
+                        <small>
+                            <i class="fas fa-birthday-cake"></i> {{ cat.age }} months old<br>
+                            <i class="fas fa-venus-mars"></i> {{ cat.get_gender_display }}
+                        </small>
+                    </p>
+                    {% if cat.description %}
+                        <p class="small">{{ cat.description|truncatewords:20 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="no-posts">
+                <i class="fas fa-paw"></i>
+                <h4>No Cats Registered</h4>
+                <p>
+                    {% if profile_user == user %}
+                        Add your first cat to get started!
+                    {% else %}
+                        {{ profile_user.username }} hasn't registered any cats yet.
+                    {% endif %}
+                </p>
+                {% if profile_user == user %}
+                    <a href="{% url 'cat_profiles:add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Cat
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Activity Tab -->
+<div id="activity-tab" class="tab-content">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="post-card">
+                <div class="post-content text-center">
+                    <i class="fas fa-chart-bar" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                    <h5>Total Posts</h5>
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary-color);">{{ posts_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="post-card">
+                <div class="post-content text-center">
+                    <i class="fas fa-heart" style="font-size: 3rem; color: #e74c3c; margin-bottom: 1rem;"></i>
+                    <h5>Total Likes Received</h5>
+                    <div style="font-size: 2rem; font-weight: 700; color: #e74c3c;">
+                        {{ posts|length|add:posts.count }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="post-card">
+                <div class="post-content">
+                    <h5><i class="fas fa-clock text-primary"></i> Recent Activity</h5>
+                    <div class="mt-3">
+                        {% for post in posts|slice:":5" %}
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="{{ post.image.url }}" alt="Post" 
+                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 10px; margin-right: 1rem;">
+                            <div>
+                                <div><strong>Posted photo of {{ post.cat.name }}</strong></div>
+                                <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No recent activity</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.add('active');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+function toggleFollow(userId) {
+    fetch('{% url "prediction_service:toggle_follow" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            user_id: userId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const followBtn = document.querySelector('.follow-btn');
+            const followersCount = document.querySelector('.followers-count');
+            
+            if (data.following) {
+                followBtn.innerHTML = '<i class="fas fa-user-check"></i> Following';
+                followBtn.classList.add('following');
+            } else {
+                followBtn.innerHTML = '<i class="fas fa-user-plus"></i> Follow';
+                followBtn.classList.remove('following');
+            }
+            
+            followersCount.textContent = data.followers_count;
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error occurred');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

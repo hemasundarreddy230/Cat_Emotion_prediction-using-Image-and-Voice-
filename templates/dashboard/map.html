@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+
+{% block title %}Veterinary Services Map - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .map-container {
+        height: 70vh;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    #map {
+        height: 100%;
+        width: 100%;
+    }
+
+    .search-panel {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .service-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .service-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .service-type {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .service-vet { background: #d4edda; color: #155724; }
+    .service-emergency { background: #f8d7da; color: #721c24; }
+    .service-pharmacy { background: #d1ecf1; color: #0c5460; }
+    .service-grooming { background: #fff3cd; color: #856404; }
+
+    .rating {
+        color: #ffc107;
+    }
+
+    .distance {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .btn-directions {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+
+    .btn-directions:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+        text-decoration: none;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="text-center">
+            <h1 style="color:#fff !important;"><i class="fas fa-map-marker-alt me-2" style="color:#fff !important;"></i>Veterinary Services Near You</h1>
+            <p class="mb-0" style="color:#fff !important;">Find nearby veterinarians, emergency clinics, and pet services</p>
+        </div>
+    </div>
+
+    <div class="search-panel">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="location" class="form-label">Your Location</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="location" placeholder="Enter your address or zip code">
+                        <button class="btn btn-outline-secondary" type="button" id="useCurrentLocation">
+                            <i class="fas fa-crosshairs"></i> Use Current Location
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="serviceType" class="form-label">Service Type</label>
+                    <select class="form-control" id="serviceType">
+                        <option value="all">All Services</option>
+                        <option value="veterinarian">Veterinarians</option>
+                        <option value="emergency">Emergency Clinics</option>
+                        <option value="pharmacy">Pet Pharmacies</option>
+                        <option value="grooming">Grooming Services</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-3">
+                    <label for="radius" class="form-label">Radius</label>
+                    <select class="form-control" id="radius">
+                        <option value="5">5 miles</option>
+                        <option value="10" selected>10 miles</option>
+                        <option value="25">25 miles</option>
+                        <option value="50">50 miles</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" id="searchServices">
+            <i class="fas fa-search me-1"></i>Search Services
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <h4 class="mb-3">Nearby Services</h4>
+            <div id="servicesList">
+                <!-- Sample services - in real implementation, these would be loaded dynamically -->
+                <div class="service-card">
+                    <div class="service-type service-vet">Veterinarian</div>
+                    <h5>Happy Paws Veterinary Clinic</h5>
+                    <div class="rating mb-2">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                        <span class="ms-1">4.5 (127 reviews)</span>
+                    </div>
+                    <p class="mb-2">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        123 Pet Street, Your City, ST 12345
+                    </p>
+                    <p class="distance mb-2">
+                        <i class="fas fa-route me-1"></i>2.3 miles away
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-phone me-1"></i>(555) 123-4567
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-success">
+                            <i class="fas fa-clock me-1"></i>Open until 6:00 PM
+                        </small>
+                        <a href="#" class="btn-directions">
+                            <i class="fas fa-directions me-1"></i>Directions
+                        </a>
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-type service-emergency">Emergency</div>
+                    <h5>24/7 Pet Emergency Center</h5>
+                    <div class="rating mb-2">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="far fa-star"></i>
+                        <span class="ms-1">4.0 (89 reviews)</span>
+                    </div>
+                    <p class="mb-2">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        456 Emergency Ave, Your City, ST 12345
+                    </p>
+                    <p class="distance mb-2">
+                        <i class="fas fa-route me-1"></i>3.7 miles away
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-phone me-1"></i>(555) 987-6543
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-success">
+                            <i class="fas fa-clock me-1"></i>Open 24/7
+                        </small>
+                        <a href="#" class="btn-directions">
+                            <i class="fas fa-directions me-1"></i>Directions
+                        </a>
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-type service-pharmacy">Pharmacy</div>
+                    <h5>Pet Meds Plus</h5>
+                    <div class="rating mb-2">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <span class="ms-1">5.0 (45 reviews)</span>
+                    </div>
+                    <p class="mb-2">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        789 Pharmacy Blvd, Your City, ST 12345
+                    </p>
+                    <p class="distance mb-2">
+                        <i class="fas fa-route me-1"></i>1.8 miles away
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-phone me-1"></i>(555) 456-7890
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-success">
+                            <i class="fas fa-clock me-1"></i>Open until 8:00 PM
+                        </small>
+                        <a href="#" class="btn-directions">
+                            <i class="fas fa-directions me-1"></i>Directions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map;
+let markers = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map with default location (San Francisco)
+    map = L.map('map').setView([37.7749, -122.4194], 13);
+    
+    // Add CARTO Voyager tiles (application-use compliant, no API key required)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(map);
+    
+    // Add sample veterinary markers
+    const sampleLocations = [
+        {
+            name: 'Happy Paws Veterinary Clinic',
+            lat: 37.7849,
+            lng: -122.4094,
+            type: 'veterinarian',
+            phone: '(555) 123-4567',
+            address: '123 Pet Street, Your City, ST 12345'
+        },
+        {
+            name: '24/7 Pet Emergency Center',
+            lat: 37.7649,
+            lng: -122.4294,
+            type: 'emergency',
+            phone: '(555) 987-6543',
+            address: '456 Emergency Ave, Your City, ST 12345'
+        },
+        {
+            name: 'Pet Meds Plus',
+            lat: 37.7749,
+            lng: -122.4394,
+            type: 'pharmacy',
+            phone: '(555) 456-7890',
+            address: '789 Pharmacy Blvd, Your City, ST 12345'
+        }
+    ];
+    
+    // Add markers to map
+    sampleLocations.forEach(location => {
+        const marker = L.marker([location.lat, location.lng]).addTo(map);
+        marker.bindPopup(`
+            <div style="min-width: 200px;">
+                <h6><strong>${location.name}</strong></h6>
+                <p class="mb-1"><i class="fas fa-map-marker-alt"></i> ${location.address}</p>
+                <p class="mb-1"><i class="fas fa-phone"></i> ${location.phone}</p>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}" 
+                   target="_blank" class="btn btn-sm btn-primary mt-2">
+                    <i class="fas fa-directions"></i> Get Directions
+                </a>
+            </div>
+        `);
+        markers.push(marker);
+    });
+    
+    const locationInput = document.getElementById('location');
+    const useCurrentLocationBtn = document.getElementById('useCurrentLocation');
+    const searchBtn = document.getElementById('searchServices');
+    const servicesList = document.getElementById('servicesList');
+
+    // Use current location
+    useCurrentLocationBtn.addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                // Center map on user's location
+                map.setView([lat, lng], 13);
+                
+                // Add marker for user's location
+                L.marker([lat, lng], {
+                    icon: L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    })
+                }).addTo(map).bindPopup('Your Location').openPopup();
+                
+                locationInput.value = `Current Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                showMessage('Location detected successfully!', 'success');
+            }, function(error) {
+                showMessage('Unable to detect location. Please enter manually.', 'warning');
+            });
+        } else {
+            showMessage('Geolocation is not supported by this browser.', 'error');
+        }
+    });
+
+    // Search services
+    searchBtn.addEventListener('click', function() {
+        const location = locationInput.value.trim();
+        const serviceType = document.getElementById('serviceType').value;
+        const radius = document.getElementById('radius').value;
+
+        if (!location) {
+            showMessage('Please enter a location first.', 'warning');
+            return;
+        }
+
+        // Show loading state
+        searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Searching...';
+        searchBtn.disabled = true;
+
+        // Simulate API call
+        setTimeout(() => {
+            searchBtn.innerHTML = '<i class="fas fa-search me-1"></i>Search Services';
+            searchBtn.disabled = false;
+            showMessage(`Found services within ${radius} miles of ${location}`, 'success');
+        }, 2000);
+    });
+
+    function showMessage(message, type) {
+        // Create and show a temporary message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'danger'} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.search-panel'));
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Initialize with user's approximate location if available
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            // Silently set approximate location
+        }, function(error) {
+            // Ignore errors on initial load
+        });
+    }
+});
+</script>
+{% endblock %}

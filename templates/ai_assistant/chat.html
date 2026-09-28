@@ -1,0 +1,859 @@
+{% extends 'base.html' %}
+
+{% block title %}Cat Care AI Assistant - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 85vh;
+        display: flex;
+        flex-direction: column;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .chat-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .chat-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        transform: rotate(45deg);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .chat-header h2 {
+        font-family: var(--font-secondary);
+        font-weight: 800;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .chat-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        position: relative;
+        z-index: 1;
+    }
+
+    .chat-controls {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .chat-controls .btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: var(--radius-full);
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .chat-controls .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.02), rgba(240, 147, 251, 0.02));
+    }
+
+    .message {
+        margin-bottom: 1.5rem;
+        animation: slideInUp 0.4s ease;
+    }
+
+    .message-user {
+        text-align: right;
+    }
+
+    .message-ai {
+        text-align: left;
+    }
+
+    .message-bubble {
+        display: inline-block;
+        max-width: 75%;
+        padding: 1.25rem 1.75rem;
+        border-radius: var(--radius-lg);
+        word-wrap: break-word;
+        position: relative;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+
+    .message-user .message-bubble {
+        background: var(--primary-gradient);
+        color: white;
+        border-bottom-right-radius: 8px;
+        box-shadow: var(--shadow-md);
+    }
+
+    .message-ai .message-bubble {
+        background: white;
+        color: var(--gray-800);
+        border: 2px solid rgba(102, 126, 234, 0.1);
+        border-bottom-left-radius: 8px;
+        box-shadow: var(--shadow-lg);
+    }
+
+    /* AI Response Formatting */
+    .message-ai .message-bubble h1,
+    .message-ai .message-bubble h2,
+    .message-ai .message-bubble h3,
+    .message-ai .message-bubble h4 {
+        color: var(--primary-color);
+        font-weight: 700;
+        margin-top: 1rem;
+        margin-bottom: 0.75rem;
+        font-family: var(--font-secondary);
+    }
+
+    .message-ai .message-bubble h1 { font-size: 1.5rem; }
+    .message-ai .message-bubble h2 { font-size: 1.3rem; }
+    .message-ai .message-bubble h3 { font-size: 1.15rem; }
+    .message-ai .message-bubble h4 { font-size: 1rem; }
+
+    .message-ai .message-bubble p {
+        margin-bottom: 0.75rem;
+        line-height: 1.7;
+    }
+
+    .message-ai .message-bubble ul,
+    .message-ai .message-bubble ol {
+        margin: 0.75rem 0;
+        padding-left: 1.5rem;
+    }
+
+    .message-ai .message-bubble li {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+    }
+
+    .message-ai .message-bubble strong {
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+
+    .message-ai .message-bubble em {
+        color: var(--secondary-color);
+        font-style: italic;
+    }
+
+    .message-ai .message-bubble code {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+
+    .message-ai .message-bubble pre {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        margin: 0.75rem 0;
+    }
+
+    .message-ai .message-bubble pre code {
+        background: none;
+        padding: 0;
+        color: #212529;
+    }
+
+    .message-ai .message-bubble blockquote {
+        border-left: 4px solid var(--primary-color);
+        padding-left: 1rem;
+        margin: 0.75rem 0;
+        color: var(--gray-600);
+        font-style: italic;
+    }
+
+    .message-ai .message-bubble hr {
+        border: none;
+        border-top: 2px solid rgba(102, 126, 234, 0.2);
+        margin: 1rem 0;
+    }
+
+    .message-ai .message-bubble a {
+        color: var(--primary-color);
+        text-decoration: underline;
+        font-weight: 600;
+    }
+
+    .message-ai .message-bubble a:hover {
+        color: var(--secondary-color);
+    }
+
+    /* Numbered sections */
+    .message-ai .message-bubble .section-number {
+        display: inline-block;
+        background: var(--primary-gradient);
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 24px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-right: 0.5rem;
+    }
+
+    /* Tips and warnings */
+    .message-ai .message-bubble .tip {
+        background: rgba(40, 167, 69, 0.1);
+        border-left: 4px solid #28a745;
+        padding: 0.75rem 1rem;
+        margin: 0.75rem 0;
+        border-radius: 4px;
+    }
+
+    .message-ai .message-bubble .warning {
+        background: rgba(255, 193, 7, 0.1);
+        border-left: 4px solid #ffc107;
+        padding: 0.75rem 1rem;
+        margin: 0.75rem 0;
+        border-radius: 4px;
+    }
+
+    .message-ai .message-bubble .info {
+        background: rgba(23, 162, 184, 0.1);
+        border-left: 4px solid #17a2b8;
+        padding: 0.75rem 1rem;
+        margin: 0.75rem 0;
+        border-radius: 4px;
+    }
+
+    .message-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0.75rem;
+        font-size: 1.3rem;
+        box-shadow: var(--shadow-md);
+    }
+
+    .message-user .message-avatar {
+        background: var(--secondary-gradient);
+        color: white;
+    }
+
+    .message-ai .message-avatar {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .message-time {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        margin-top: 0.75rem;
+        font-weight: 400;
+    }
+
+    .chat-input-area {
+        padding: 2rem;
+        background: white;
+        border-top: 2px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .chat-input {
+        border: 2px solid var(--gray-300);
+        border-radius: var(--radius-full);
+        padding: 1rem 4.5rem 1rem 1.5rem;
+        font-size: 1rem;
+        outline: none;
+        transition: all 0.3s ease;
+        background: rgba(255,255,255,0.9);
+        font-weight: 500;
+        width: 100%;
+    }
+
+    .chat-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+    }
+
+    .send-button {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-md);
+        z-index: 10;
+    }
+
+    .send-button:hover {
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .send-button:active {
+        transform: translateY(-50%) scale(0.95);
+    }
+
+    .send-button i {
+        font-size: 1.1rem;
+    }
+
+    .typing-indicator {
+        display: none;
+        padding: 1rem;
+        text-align: center;
+        color: var(--gray-600);
+        font-style: italic;
+        font-weight: 500;
+    }
+
+    .typing-indicator.show {
+        display: block;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+    }
+
+    .cat-suggestions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .suggestion-btn {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: var(--radius-full);
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .suggestion-btn:hover {
+        background: var(--primary-gradient);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-500);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 2rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .empty-state h4 {
+        font-family: var(--font-secondary);
+        font-weight: 700;
+        color: var(--gray-700);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 1rem 2rem;">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="chat-container fade-in">
+                <div class="chat-header"><h2 style="color: #ffffff;">
+  <i class="fas fa-cat me-2"></i>Cat Care AI Assistant
+</h2>
+
+                    <p class="mb-0">Your dedicated feline expert - Ask me anything about cats! 🐾</p>
+                </div>
+
+                <div class="chat-controls">
+                    <div>
+                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">
+                            <i class="fas fa-paw me-1"></i>Cat Specialist AI
+                        </span>
+                        {% if user_cats %}
+                            <span class="badge ms-2" style="background: rgba(255,255,255,0.2); color: white;">
+                                <i class="fas fa-heart me-1"></i>{{ user_cats|length }} Cat{{ user_cats|length|pluralize }} in Profile
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button class="btn btn-sm me-2" onclick="clearAllHistory()" title="Clear Chat History">
+                            <i class="fas fa-trash me-1"></i>Clear History
+                        </button>
+                        <a href="{% url 'ai_assistant:history' %}" class="btn btn-sm" title="View Full History">
+                            <i class="fas fa-history me-1"></i>History
+                        </a>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    {% for conversation in recent_conversations %}
+                        <div class="message message-user">
+                            <div class="d-flex align-items-end justify-content-end">
+                                <div class="message-bubble">
+                                    {{ conversation.question }}
+                                    <div class="message-time">{{ conversation.created_at|timesince }} ago</div>
+                                </div>
+                                <div class="message-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="message message-ai">
+                            <div class="d-flex align-items-end">
+                                <div class="message-avatar">
+                                    <i class="fas fa-cat"></i>
+                                </div>
+                                <div class="message-bubble">
+                                    {{ conversation.answer }}
+                                    <div class="message-time">{{ conversation.created_at|timesince }} ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <i class="fas fa-cat"></i>
+                            <h4>Welcome to Your Cat Care AI!</h4>
+                            <p>I'm here to help with all your feline questions. Try asking about:</p>
+                            <div class="cat-suggestions">
+                                <button class="suggestion-btn" onclick="askSuggestion('Why is my cat purring?')">
+                                    Why is my cat purring?
+                                </button>
+                                <button class="suggestion-btn" onclick="askSuggestion('What should I feed my cat?')">
+                                    What should I feed my cat?
+                                </button>
+                                <button class="suggestion-btn" onclick="askSuggestion('How to understand cat behavior?')">
+                                    Cat behavior tips
+                                </button>
+                                <button class="suggestion-btn" onclick="askSuggestion('My cat seems sad, what should I do?')">
+                                    Cat emotions help
+                                </button>
+                                <button class="suggestion-btn" onclick="askSuggestion('Cat health warning signs?')">
+                                    Health warning signs
+                                </button>
+                                <button class="suggestion-btn" onclick="askSuggestion('How to play with my cat?')">
+                                    Play and exercise
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="typing-indicator" id="typingIndicator">
+                        <i class="fas fa-cat me-2"></i>Your cat expert is thinking...
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <form id="chatForm" method="post">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control chat-input" 
+                                   id="messageInput" 
+                                   name="message" 
+                                   placeholder="Ask me about cat health, behavior, emotions, diet..." 
+                                   required>
+                            <button type="submit" class="send-button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="cat-suggestions mt-3">
+                        <button class="suggestion-btn" onclick="askSuggestion('Cat grooming tips')">
+                            <i class="fas fa-cut me-1"></i>Grooming
+                        </button>
+                        <button class="suggestion-btn" onclick="askSuggestion('Litter box problems')">
+                            <i class="fas fa-box me-1"></i>Litter Box
+                        </button>
+                        <button class="suggestion-btn" onclick="askSuggestion('Cat play ideas')">
+                            <i class="fas fa-play me-1"></i>Play Time
+                        </button>
+                        <button class="suggestion-btn" onclick="askSuggestion('Cat health checkup')">
+                            <i class="fas fa-stethoscope me-1"></i>Health
+                        </button>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            I specialize in cat-related topics only. Ask me about feline health, behavior, emotions, diet, and care!
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatForm = document.getElementById('chatForm');
+    const messageInput = document.getElementById('messageInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    // Auto-scroll to bottom
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Initial scroll
+    scrollToBottom();
+
+    // Handle form submission
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        // Add user message to chat
+        addMessage(message, 'user');
+        
+        // Clear input and show typing indicator
+        messageInput.value = '';
+        showTypingIndicator();
+
+        // Send message to AI assistant
+        fetch('{% url "ai_assistant:ask" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                question: message,
+                cat_id: null // You can add cat selection later
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideTypingIndicator();
+            if (data.success) {
+                addMessage(data.answer, 'ai');
+            } else {
+                addMessage('🐱 Sorry, I encountered an error. Please try asking about your cat again!', 'ai');
+            }
+        })
+        .catch(error => {
+            hideTypingIndicator();
+            addMessage('🐱 Sorry, I had trouble connecting. Please try your cat question again!', 'ai');
+        });
+    });
+
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${sender}`;
+        
+        const timeStr = 'just now';
+        
+        if (sender === 'user') {
+            messageDiv.innerHTML = `
+                <div class="d-flex align-items-end justify-content-end">
+                    <div class="message-bubble">
+                        ${escapeHtml(text)}
+                        <div class="message-time">${timeStr}</div>
+                    </div>
+                    <div class="message-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Format AI response with proper markdown-like formatting
+            const formattedText = formatAIResponse(text);
+            messageDiv.innerHTML = `
+                <div class="d-flex align-items-end">
+                    <div class="message-avatar">
+                        <i class="fas fa-cat"></i>
+                    </div>
+                    <div class="message-bubble">
+                        ${formattedText}
+                        <div class="message-time">${timeStr}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    function formatAIResponse(text) {
+        // Escape HTML first to prevent XSS
+        let formatted = escapeHtml(text);
+        
+        // Code blocks first (```code```) - protect from other formatting
+        const codeBlocks = [];
+        formatted = formatted.replace(/```([^`]+)```/g, function(match, code) {
+            codeBlocks.push(code);
+            return `__CODEBLOCK_${codeBlocks.length - 1}__`;
+        });
+        
+        // Inline code (`code`) - protect from other formatting
+        const inlineCodes = [];
+        formatted = formatted.replace(/`([^`]+)`/g, function(match, code) {
+            inlineCodes.push(code);
+            return `__INLINECODE_${inlineCodes.length - 1}__`;
+        });
+        
+        // Headers (must be at start of line)
+        formatted = formatted.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+        formatted = formatted.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+        formatted = formatted.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+        
+        // Bold (**text** or __text__) - non-greedy match
+        formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/__(.+?)__/g, '<strong>$1</strong>');
+        
+        // Italic (*text* or _text_) - non-greedy match, not part of bold
+        formatted = formatted.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+        formatted = formatted.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+        
+        // Blockquotes (> text)
+        formatted = formatted.replace(/^&gt;\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+        
+        // Horizontal rules (---)
+        formatted = formatted.replace(/^---$/gm, '<hr>');
+        
+        // Numbered lists (1. item, 2. item, etc.)
+        let inOrderedList = false;
+        formatted = formatted.replace(/^(\d+)\.\s+(.+)$/gm, function(match, num, content) {
+            if (!inOrderedList) {
+                inOrderedList = true;
+                return '<ol><li>' + content + '</li>';
+            }
+            return '<li>' + content + '</li>';
+        });
+        if (inOrderedList) {
+            formatted = formatted.replace(/<\/li>\n(?!<li>)/g, '</li></ol>\n');
+        }
+        
+        // Bullet lists (- item or * item)
+        let inUnorderedList = false;
+        formatted = formatted.replace(/^[-•]\s+(.+)$/gm, function(match, content) {
+            if (!inUnorderedList) {
+                inUnorderedList = true;
+                return '<ul><li>' + content + '</li>';
+            }
+            return '<li>' + content + '</li>';
+        });
+        if (inUnorderedList) {
+            formatted = formatted.replace(/<\/li>\n(?!<li>)/g, '</li></ul>\n');
+        }
+        
+        // Special boxes
+        formatted = formatted.replace(/\[TIP\](.+?)\[\/TIP\]/gs, '<div class="tip"><strong>💡 Tip:</strong> $1</div>');
+        formatted = formatted.replace(/\[WARNING\](.+?)\[\/WARNING\]/gs, '<div class="warning"><strong>⚠️ Warning:</strong> $1</div>');
+        formatted = formatted.replace(/\[INFO\](.+?)\[\/INFO\]/gs, '<div class="info"><strong>ℹ️ Info:</strong> $1</div>');
+        
+        // Restore code blocks
+        codeBlocks.forEach((code, index) => {
+            formatted = formatted.replace(`__CODEBLOCK_${index}__`, `<pre><code>${code}</code></pre>`);
+        });
+        
+        // Restore inline code
+        inlineCodes.forEach((code, index) => {
+            formatted = formatted.replace(`__INLINECODE_${index}__`, `<code>${code}</code>`);
+        });
+        
+        // Convert newlines to paragraphs
+        formatted = formatted.split('\n\n').map(para => {
+            para = para.trim();
+            if (!para) return '';
+            // Don't wrap if already has block-level tags
+            if (para.match(/^<(h[1-6]|div|ul|ol|pre|blockquote|hr)/)) {
+                return para;
+            }
+            return '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+        }).join('\n');
+        
+        // Clean up
+        formatted = formatted.replace(/<p><\/p>/g, '');
+        formatted = formatted.replace(/<p>\s*<\/p>/g, '');
+        
+        return formatted;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showTypingIndicator() {
+        typingIndicator.classList.add('show');
+        scrollToBottom();
+    }
+
+    function hideTypingIndicator() {
+        typingIndicator.classList.remove('show');
+    }
+
+    // Focus input on load
+    messageInput.focus();
+    
+    // CSRF token function
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Make functions global for onclick handlers
+    window.askSuggestion = function(suggestion) {
+        messageInput.value = suggestion;
+        messageInput.focus();
+        chatForm.dispatchEvent(new Event('submit'));
+    };
+
+    window.clearAllHistory = function() {
+        if (confirm('🐱 Are you sure you want to clear all chat history? This cannot be undone.')) {
+            fetch('{% url "ai_assistant:clear_history" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear chat messages
+                    const messages = chatMessages.querySelectorAll('.message');
+                    messages.forEach(msg => msg.remove());
+                    
+                    // Show empty state
+                    chatMessages.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-cat"></i>
+                            <h4>Chat History Cleared!</h4>
+                            <p>Ready for new cat questions. What would you like to know?</p>
+                            <div class="cat-suggestions">
+                                <button class="suggestion-btn" onclick="askSuggestion('Why is my cat purring?')">
+                                    Why is my cat purring?
+                                </button>
+                                <button class="suggestion-btn" onclick="askSuggestion('What should I feed my cat?')">
+                                    What should I feed my cat?
+                                </button>
+                                <button class="suggestion-btn" onclick="askSuggestion('How to understand cat behavior?')">
+                                    Cat behavior tips
+                                </button>
+                            </div>
+                        </div>
+                        <div class="typing-indicator" id="typingIndicator">
+                            <i class="fas fa-cat me-2"></i>Your cat expert is thinking...
+                        </div>
+                    `;
+                    
+                    showNotification(`🐱 Cleared ${data.deleted_count} conversations!`, 'success');
+                } else {
+                    showNotification('❌ Failed to clear history', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('❌ Error clearing history', 'error');
+            });
+        }
+    };
+
+    // Professional notification function
+    window.showNotification = function(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 350px; max-width: 400px; border-radius: 16px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 4000);
+    };
+});
+</script>
+{% endblock %}

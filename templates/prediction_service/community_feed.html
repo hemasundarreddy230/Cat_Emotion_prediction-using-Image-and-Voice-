@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}Community Feed - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .post-card {
+        background: white;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .post-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+    }
+
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+        border: 3px solid var(--primary-color);
+    }
+
+    .post-image {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+    }
+
+    .post-actions {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .action-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.2);
+    }
+
+    .action-btn.liked {
+        color: #e74c3c;
+    }
+
+    .post-content {
+        padding: 1rem 1.5rem;
+    }
+
+    .emotion-tag {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+
+    .comment-section {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+    }
+
+    .comment {
+        margin-bottom: 0.5rem;
+    }
+
+    .comment-input {
+        border: none;
+        background: white;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .filter-bar {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .create-post-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+
+    .create-post-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center mb-4">
+            
+           
+          <h1  style="color: #fff !important;">
+    <i class="fas fa-globe text-primary"></i>
+    Community Feed
+</h1>
+ <p  style="color: white !important;">Discover and share amazing cat moments</p>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="row">
+    <div class="col-12">
+        <div class="filter-bar">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter text-primary"></i>
+                        Filter Posts
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <form method="get" class="d-flex">
+                        <select name="emotion" class="form-select me-2" onchange="this.form.submit()">
+                            <option value="">All Emotions</option>
+                            <option value="Happy" {% if emotion_filter == 'Happy' %}selected{% endif %}>Happy</option>
+                            <option value="Sad" {% if emotion_filter == 'Sad' %}selected{% endif %}>Sad</option>
+                            <option value="Angry" {% if emotion_filter == 'Angry' %}selected{% endif %}>Angry</option>
+                            <option value="Scared" {% if emotion_filter == 'Scared' %}selected{% endif %}>Scared</option>
+                            <option value="Normal" {% if emotion_filter == 'Normal' %}selected{% endif %}>Normal</option>
+                        </select>
+                        {% if emotion_filter %}
+                        <a href="{% url 'prediction_service:community_feed' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Posts -->
+<div class="row">
+    {% for post in posts %}
+    <div class="col-lg-6 col-xl-4">
+        <div class="post-card">
+            <!-- Post Header -->
+            <div class="post-header">
+                {% if post.cat.photo %}
+                    <img src="{{ post.cat.photo.url }}" alt="{{ post.cat.name }}" class="user-avatar">
+                {% else %}
+                    <div class="user-avatar bg-primary d-flex align-items-center justify-content-center">
+                        <i class="fas fa-cat text-white"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <h6 class="mb-0">{{ post.cat.name }}</h6>
+                    <small class="text-muted">by {{ post.user.username }}</small>
+                    <br>
+                    <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                </div>
+            </div>
+
+            <!-- Post Image -->
+            <img src="{{ post.image.url }}" alt="Cat photo" class="post-image">
+
+            <!-- Post Actions -->
+            <div class="post-actions">
+                <button class="action-btn like-btn" data-post-id="{{ post.id }}">
+                    <i class="fas fa-heart"></i>
+                </button>
+                <button class="action-btn comment-btn" onclick="toggleComments({{ post.id }})">
+                    <i class="fas fa-comment"></i>
+                </button>
+                <button class="action-btn share-btn">
+                    <i class="fas fa-share"></i>
+                </button>
+                <div class="mt-2">
+                    <strong class="likes-count-{{ post.id }}">{{ post.likes_count }}</strong> likes
+                    <span class="ms-3">
+                        <strong>{{ post.comments_count }}</strong> comments
+                    </span>
+                </div>
+            </div>
+
+            <!-- Post Content -->
+            <div class="post-content">
+                {% if post.emotion_tags %}
+                    {% for emotion in post.emotion_tags %}
+                        <span class="emotion-tag">{{ emotion }}</span>
+                    {% endfor %}
+                {% endif %}
+                {% if post.caption %}
+                    <p class="mb-2">
+                        <strong>{{ post.user.username }}</strong> {{ post.caption }}
+                    </p>
+                {% endif %}
+                {% if post.location %}
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-map-marker-alt"></i> {{ post.location }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Comments Section -->
+            <div class="comment-section" id="comments-{{ post.id }}" style="display: none;">
+                <div class="comments-list" id="comments-list-{{ post.id }}">
+                    {% for comment in post.comments.all|slice:":3" %}
+                    <div class="comment">
+                        <strong>{{ comment.user.username }}</strong>
+                        {{ comment.content }}
+                        <small class="text-muted">{{ comment.created_at|timesince }} ago</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <input type="text" class="comment-input" placeholder="Add a comment..." 
+                       onkeypress="handleCommentSubmit(event, {{ post.id }})">
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-images" style="font-size: 4rem; color: var(--primary-color); margin-bottom: 2rem;"></i>
+            <h4>No Posts Yet</h4>
+            <p class="text-muted mb-4">Be the first to share your cat's amazing moments!</p>
+            <a href="{% url 'prediction_service:create_post' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Create First Post
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if posts.has_other_pages %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="Posts pagination">
+            <ul class="pagination justify-content-center">
+                {% if posts.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.previous_page_number }}{% if emotion_filter %}&emotion={{ emotion_filter }}{% endif %}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in posts.paginator.page_range %}
+                    {% if posts.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > posts.number|add:'-3' and num < posts.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if emotion_filter %}&emotion={{ emotion_filter }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.next_page_number }}{% if emotion_filter %}&emotion={{ emotion_filter }}{% endif %}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+<!-- Create Post Button -->
+<button class="create-post-btn" onclick="location.href='{% url 'prediction_service:create_post' %}'">
+    <i class="fas fa-plus"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleComments(postId) {
+    const commentsSection = document.getElementById(`comments-${postId}`);
+    if (commentsSection.style.display === 'none') {
+        commentsSection.style.display = 'block';
+    } else {
+        commentsSection.style.display = 'none';
+    }
+}
+
+function handleCommentSubmit(event, postId) {
+    if (event.key === 'Enter') {
+        const input = event.target;
+        const content = input.value.trim();
+        
+        if (content) {
+            addComment(postId, content, input);
+        }
+    }
+}
+
+function addComment(postId, content, inputElement) {
+    fetch('{% url "prediction_service:add_comment" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            post_id: postId,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const commentsList = document.getElementById(`comments-list-${postId}`);
+            const newComment = document.createElement('div');
+            newComment.className = 'comment';
+            newComment.innerHTML = `
+                <strong>${data.username}</strong>
+                ${data.content}
+                <small class="text-muted">just now</small>
+            `;
+            commentsList.appendChild(newComment);
+            inputElement.value = '';
+        } else {
+            alert('Error adding comment: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error occurred');
+    });
+}
+
+// Like functionality
+document.querySelectorAll('.like-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        toggleLike(postId, this);
+    });
+});
+
+function toggleLike(postId, buttonElement) {
+    fetch('{% url "prediction_service:toggle_like" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            post_id: postId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const likesCountElement = document.querySelector(`.likes-count-${postId}`);
+            likesCountElement.textContent = data.likes_count;
+            
+            if (data.liked) {
+                buttonElement.classList.add('liked');
+            } else {
+                buttonElement.classList.remove('liked');
+            }
+        } else {
+            alert('Error toggling like: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error occurred');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

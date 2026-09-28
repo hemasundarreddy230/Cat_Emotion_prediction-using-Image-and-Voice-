@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Diet Plan - {{ cat.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .diet-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95));
+        backdrop-filter: blur(10px);
+        border-radius: 25px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+
+    .form-control, .form-select {
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(255,107,107,0.25);
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        /* Use standardized button sizing */
+        padding: 0.75rem 2rem;
+        font-size: 0.875rem;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .food-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .food-item:hover {
+        border-color: var(--primary-color);
+        background: rgba(255,107,107,0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-start mb-4">
+            <h1 class="display-4 mb-3" style="color: white !important;">
+                <i class="fas fa-utensils text-primary"></i>
+                Add Diet Plan
+            </h1>
+            <p class="lead" style="color: white !important;">Create a nutrition plan for {{ cat.name }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="diet-card">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Cat Info -->
+                <div class="text-center mb-4">
+                    {% if cat.photo %}
+                        <img src="{{ cat.photo.url }}" alt="{{ cat.name }}" 
+                             style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color);">
+                    {% else %}
+                        <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--primary-color); display: inline-flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-cat text-white" style="font-size: 2rem;"></i>
+                        </div>
+                    {% endif %}
+                    <h4 class="mt-2">{{ cat.name }}</h4>
+                    <p class="text-muted">{{ cat.breed|default:"Mixed Breed" }} • {{ cat.age }} months • {{ cat.get_gender_display }}</p>
+                </div>
+
+                <!-- Plan Title -->
+                <div class="mb-3">
+                    <label for="title" class="form-label">
+                        <i class="fas fa-tag"></i> Plan Title
+                    </label>
+                    <input type="text" class="form-control" id="title" name="title" 
+                           placeholder="e.g., Weight Management Plan" required>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-3">
+                    <label for="description" class="form-label">
+                        <i class="fas fa-align-left"></i> Description
+                    </label>
+                    <textarea class="form-control" id="description" name="description" rows="3" 
+                              placeholder="Describe the diet plan goals and requirements..."></textarea>
+                </div>
+
+                <!-- Food Items -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="fas fa-fish"></i> Food Items
+                    </label>
+                    <div id="foodItems">
+                        <div class="food-item">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" name="food_name[]" 
+                                           placeholder="Food name (e.g., Dry kibble)">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" name="food_quantity[]" 
+                                           placeholder="Quantity (e.g., 1/2 cup)">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeFoodItem(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" onclick="addFoodItem()">
+                        <i class="fas fa-plus"></i> Add Food Item
+                    </button>
+                </div>
+
+                <!-- Feeding Schedule -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="fas fa-clock"></i> Feeding Schedule
+                    </label>
+                    <div id="feedingSchedule">
+                        <div class="food-item">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <input type="time" class="form-control" name="feeding_time[]">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" name="feeding_note[]" 
+                                           placeholder="Notes (e.g., Morning meal)">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeScheduleItem(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" onclick="addScheduleItem()">
+                        <i class="fas fa-plus"></i> Add Feeding Time
+                    </button>
+                </div>
+
+                <!-- Notes -->
+                <div class="mb-4">
+                    <label for="notes" class="form-label">
+                        <i class="fas fa-sticky-note"></i> Additional Notes
+                    </label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3" 
+                              placeholder="Any special instructions or notes..."></textarea>
+                </div>
+
+                <!-- Active Status -->
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">
+                            <i class="fas fa-check-circle"></i> Make this plan active
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-create btn-lg">
+                        <i class="fas fa-save"></i> Save Diet Plan
+                    </button>
+                    <a href="{% url 'cat_profiles:detail' cat.id %}" class="btn btn-outline-secondary btn-lg ms-3">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addFoodItem() {
+    const container = document.getElementById('foodItems');
+    const newItem = document.createElement('div');
+    newItem.className = 'food-item';
+    newItem.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" class="form-control" name="food_name[]" 
+                       placeholder="Food name (e.g., Wet food)">
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="food_quantity[]" 
+                       placeholder="Quantity (e.g., 1 can)">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-danger w-100" onclick="removeFoodItem(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(newItem);
+}
+
+function removeFoodItem(button) {
+    const foodItems = document.querySelectorAll('.food-item');
+    if (foodItems.length > 1) {
+        button.closest('.food-item').remove();
+    } else {
+        alert('At least one food item is required.');
+    }
+}
+
+function addScheduleItem() {
+    const container = document.getElementById('feedingSchedule');
+    const newItem = document.createElement('div');
+    newItem.className = 'food-item';
+    newItem.innerHTML = `
+        <div class="row">
+            <div class="col-md-4">
+                <input type="time" class="form-control" name="feeding_time[]">
+            </div>
+            <div class="col-md-6">
+                <input type="text" class="form-control" name="feeding_note[]" 
+                       placeholder="Notes (e.g., Evening meal)">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-danger w-100" onclick="removeScheduleItem(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(newItem);
+}
+
+function removeScheduleItem(button) {
+    const scheduleItems = document.querySelectorAll('#feedingSchedule .food-item');
+    if (scheduleItems.length > 1) {
+        button.closest('.food-item').remove();
+    } else {
+        alert('At least one feeding time is required.');
+    }
+}
+</script>
+{% endblock %}

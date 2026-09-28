@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}My Cats - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cat-card {
+        transition: all 0.3s ease;
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .cat-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .cat-image {
+        height: 250px;
+        object-fit: cover;
+        width: 100%;
+    }
+
+    .cat-placeholder {
+        height: 250px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 4rem;
+    }
+
+    .cat-stats {
+        display: flex;
+        justify-content: space-around;
+        padding: 1rem 0;
+        background: rgba(0,0,0,0.05);
+        margin-top: 1rem;
+        border-radius: 10px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    .add-cat-card {
+        border: 3px dashed #ddd;
+        background: rgba(255,255,255,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .add-cat-card:hover {
+        border-color: var(--primary-color);
+        background: rgba(255,107,107,0.1);
+        transform: scale(1.02);
+    }
+
+    .add-cat-content {
+        text-align: center;
+        color: #666;
+    }
+
+    .add-cat-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 style="color:white !important;">
+    <i class="fas fa-paw" style="color:white !important;"></i>
+    My Cats
+</h1>
+
+            <a href="{% url 'cat_profiles:add' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Add New Cat
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for cat in cats %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card cat-card h-100">
+            {% if cat.photo %}
+                <img src="{{ cat.photo.url }}" alt="{{ cat.name }}" class="cat-image">
+            {% else %}
+                <div class="cat-placeholder">
+                    <i class="fas fa-cat"></i>
+                </div>
+            {% endif %}
+            
+            <div class="card-body">
+                <h5 class="card-title d-flex justify-content-between align-items-center">
+                    {{ cat.name }}
+                    <span class="badge bg-primary">{{ cat.get_gender_display }}</span>
+                </h5>
+                
+                <p class="card-text">
+                    <strong>Breed:</strong> {{ cat.breed|default:"Mixed Breed" }}<br>
+                    <strong>Age:</strong> {{ cat.age }} months<br>
+                    {% if cat.weight %}
+                        <strong>Weight:</strong> {{ cat.weight }} kg<br>
+                    {% endif %}
+                </p>
+                
+                {% if cat.description %}
+                    <p class="card-text text-muted">{{ cat.description|truncatewords:15 }}</p>
+                {% endif %}
+                
+                <div class="cat-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ cat.prediction_count }}</div>
+                        <div class="stat-label">Predictions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ cat.photo_count }}</div>
+                        <div class="stat-label">Photos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ cat.created_at|timesince|truncatewords:1 }}</div>
+                        <div class="stat-label">Registered</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-transparent">
+                <div class="d-flex gap-2">
+                    <a href="{% url 'cat_profiles:detail' cat.id %}" class="btn btn-primary flex-fill">
+                        <i class="fas fa-eye"></i> View Profile
+                    </a>
+                    <a href="{% url 'cat_profiles:edit' cat.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="add-cat-card" onclick="window.location.href='{% url 'cat_profiles:add' %}'">
+            <div class="add-cat-content">
+                <div class="add-cat-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h4>Add Your First Cat</h4>
+                <p>Start by registering your feline friend to begin emotion detection and care management.</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    {% if cats %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="add-cat-card" onclick="window.location.href='{% url 'cat_profiles:add' %}'">
+            <div class="add-cat-content">
+                <div class="add-cat-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h4>Add Another Cat</h4>
+                <p>Register another feline friend to expand your cat care family.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if cats %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="h3 text-primary">{{ cats.count }}</div>
+                        <div class="text-muted">Total Cats</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h3 text-success">{{ cats|length|add:0 }}</div>
+                        <div class="text-muted">Active Profiles</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h3 text-warning">
+                            {% for cat in cats %}{{ cat.prediction_count|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}
+                        </div>
+                        <div class="text-muted">Total Predictions</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h3 text-info">
+                            {% for cat in cats %}{{ cat.photo_count|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}
+                        </div>
+                        <div class="text-muted">Total Photos</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add staggered animation to cat cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.cat-card, .add-cat-card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

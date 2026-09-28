@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ cat.name }} - Cat Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin: 2rem 0;
+    }
+
+    .form-control {
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+
+    .current-photo {
+        max-width: 200px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="text-center">
+            <h1><i class="fas fa-edit me-2"></i>Edit {{ cat.name }}'s Profile</h1>
+            <p class="mb-0">Update your cat's information</p>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Cat Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ cat.name }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="breed" class="form-label">Breed</label>
+                        <input type="text" class="form-control" id="breed" name="breed" value="{{ cat.breed|default:'' }}" placeholder="e.g., Persian, Siamese, Mixed">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="age" class="form-label">Age (years) *</label>
+                        <input type="number" class="form-control" id="age" name="age" value="{{ cat.age }}" min="0" max="30" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="gender" class="form-label">Gender *</label>
+                        <select class="form-control" id="gender" name="gender" required>
+                            <option value="">Select Gender</option>
+                            <option value="M" {% if cat.gender == 'M' %}selected{% endif %}>Male</option>
+                            <option value="F" {% if cat.gender == 'F' %}selected{% endif %}>Female</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="weight" class="form-label">Weight (kg)</label>
+                        <input type="number" class="form-control" id="weight" name="weight" value="{{ cat.weight|default:'' }}" step="0.1" min="0" max="20" placeholder="e.g., 4.5">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Tell us about your cat's personality, habits, or any special notes...">{{ cat.description|default:'' }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="photo" class="form-label">Photo</label>
+                {% if cat.photo %}
+                    <div class="mb-2">
+                        <p class="text-muted">Current photo:</p>
+                        <img src="{{ cat.photo.url }}" alt="{{ cat.name }}" class="current-photo">
+                    </div>
+                {% endif %}
+                <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                <small class="form-text text-muted">Upload a new photo to replace the current one (optional)</small>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'cat_profiles:detail' cat.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>Update Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Preview uploaded image
+    const photoInput = document.getElementById('photo');
+    const currentPhoto = document.querySelector('.current-photo');
+    
+    photoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (currentPhoto) {
+                    currentPhoto.src = e.target.result;
+                } else {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'current-photo';
+                    img.alt = 'Preview';
+                    photoInput.parentNode.insertBefore(img, photoInput);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}

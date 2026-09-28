@@ -1,0 +1,70 @@
+Django==4.2.7
+djangorestframework==3.16.1
+django-cors-headers==4.3.1
+django-allauth==0.63.6
+PyJWT==2.14.0
+importlib-resources==7.1.0
+setuptools==69.5.1
+
+
+# FastAPI (optional if your project uses it)
+fastapi==0.104.1
+uvicorn==0.24.0
+starlette==0.27.0
+anyio==3.7.1
+pydantic==2.12.5
+
+# Database and ORM
+sqlalchemy==2.0.23
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+bcrypt==4.2.1
+cryptography==46.0.3
+
+# Environment & HTTP
+python-dotenv==1.0.0
+requests==2.31.0
+
+# ML/DL (optional, only if your project uses them)
+tensorflow-intel==2.18.0
+# torch==2.10.0       # Not used in Django app - skipped to save ~2GB install
+# torchvision==0.20.0 # Not used in Django app - skipped to save ~2GB install
+numpy==1.26.4
+scipy==1.14.1
+librosa==0.10.1
+audioread==3.1.0
+joblib==1.5.3
+numba==0.63.1
+soundfile==0.13.1
+soxr==1.0.0
+pooch==1.9.0
+lazy-loader==0.4
+msgpack==1.1.2
+
+# Utilities
+Pillow==10.0.0
+python-magic-bin==0.4.14
+
+# TensorFlow dependencies
+absl-py==2.4.0
+astunparse==1.6.3
+flatbuffers==25.12.19
+gast==0.4.0
+google-pasta==0.2.0
+h5py==3.15.1
+libclang==18.1.1
+opt-einsum==3.4.0
+packaging==26.0
+protobuf==4.25.8
+six==1.17.0
+termcolor==3.3.0
+
+# Optional utilities
+filelock==3.21.2
+sympy==1.14.0
+networkx==3.6.1
+jinja2==3.1.6
+decorator==5.2.1

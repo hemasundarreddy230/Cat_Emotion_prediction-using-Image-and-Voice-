@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+    }
+
+    .form-control {
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-header">
+        <div class="text-center">
+            <h1><i class="fas fa-user me-2"></i>User Profile</h1>
+            <p class="mb-0">Manage your account settings</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="profile-container">
+                <h3 class="mb-4">Personal Information</h3>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Update Profile
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="profile-container">
+                <h3 class="mb-4">Change Password</h3>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="change_password" value="1">
+                    
+                    {{ password_form.as_p }}
+                    
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-key me-1"></i>Change Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

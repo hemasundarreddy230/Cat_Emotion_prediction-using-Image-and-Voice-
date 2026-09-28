@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}Enhanced Prediction Service - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .prediction-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95));
+        backdrop-filter: blur(10px);
+        border-radius: 25px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .prediction-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .stats-number {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-start mb-4">
+            <h1  style="color: white !important;">
+                <i class="fas fa-rocket text-primary"></i>
+                Enhanced Prediction Service
+            </h1>
+            <p class="lead" style="color: white !important;">Advanced AI-powered emotion detection with community features</p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_predictions }}</div>
+            <div>Total Predictions</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number">{{ success_rate|floatformat:1 }}%</div>
+            <div>Success Rate</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number">{{ user_cats.count }}</div>
+            <div>Registered Cats</div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Cards -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="feature-card text-center" onclick="location.href='{% url 'emotion_detection:detection' %}'">
+            <div class="feature-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h5>AI Detection</h5>
+            <p class="text-muted">Advanced emotion analysis</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="feature-card text-center" onclick="location.href='{% url 'prediction_service:community_feed' %}'">
+            <div class="feature-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h5>Community</h5>
+            <p class="text-muted">Share and discover</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="feature-card text-center" onclick="location.href='{% url 'prediction_service:veterinary_map' %}'">
+            <div class="feature-icon">
+                <i class="fas fa-map-marked-alt"></i>
+            </div>
+            <h5>Vet Services</h5>
+            <p class="text-muted">Find nearby vets</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="feature-card text-center" onclick="location.href='{% url 'prediction_service:create_post' %}'">
+            <div class="feature-icon">
+                <i class="fas fa-camera"></i>
+            </div>
+            <h5>Share Photos</h5>
+            <p class="text-muted">Instagram-like posts</p>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Predictions -->
+{% if user_predictions %}
+<div class="row">
+    <div class="col-12">
+        <div class="prediction-card">
+            <h4 class="mb-4">
+                <i class="fas fa-history text-primary"></i>
+                Recent Predictions
+            </h4>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Cat</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Confidence</th>
+                            <th>Processing Time</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prediction in user_predictions %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if prediction.cat.photo %}
+                                        <img src="{{ prediction.cat.photo.url }}" alt="{{ prediction.cat.name }}" 
+                                             class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 40px; height: 40px;">
+                                            <i class="fas fa-cat text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                    <strong>{{ prediction.cat.name }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ prediction.prediction_type|title }}</span>
+                            </td>
+                            <td>
+                                {% if prediction.status == 'completed' %}
+                                    <span class="badge bg-success">{{ prediction.status|title }}</span>
+                                {% elif prediction.status == 'failed' %}
+                                    <span class="badge bg-danger">{{ prediction.status|title }}</span>
+                                {% elif prediction.status == 'processing' %}
+                                    <span class="badge bg-warning">{{ prediction.status|title }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ prediction.status|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if prediction.confidence_score %}
+                                    {{ prediction.confidence_score|floatformat:1 }}%
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if prediction.processing_time %}
+                                    {{ prediction.processing_time|floatformat:2 }}s
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ prediction.created_at|timesince }} ago</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="prediction-card text-center">
+            <div class="mb-4">
+                <i class="fas fa-chart-line" style="font-size: 4rem; color: var(--primary-color);"></i>
+            </div>
+            <h4>No Predictions Yet</h4>
+            <p class="text-muted mb-4">Start by analyzing your cat's emotions using our AI detection service.</p>
+            <a href="{% url 'emotion_detection:detection' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-brain"></i> Start Detection
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="prediction-card">
+            <h4 class="mb-4">
+                <i class="fas fa-bolt text-primary"></i>
+                Quick Actions
+            </h4>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'emotion_detection:detection' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-camera"></i><br>
+                        <small>Image Detection</small>
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'emotion_detection:detection' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-microphone"></i><br>
+                        <small>Audio Detection</small>
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'prediction_service:create_post' %}" class="btn btn-outline-success w-100">
+                        <i class="fas fa-plus"></i><br>
+                        <small>Create Post</small>
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'prediction_service:community_feed' %}" class="btn btn-outline-info w-100">
+                        <i class="fas fa-globe"></i><br>
+                        <small>Explore Community</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

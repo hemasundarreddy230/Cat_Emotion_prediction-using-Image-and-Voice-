@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Health Alerts - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert-card {
+        border-left: 4px solid;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .alert-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .alert-card.alert-high {
+        border-left-color: #dc3545;
+        background: linear-gradient(135deg, rgba(220,53,69,0.1), rgba(220,53,69,0.05));
+    }
+    
+    .alert-card.alert-medium {
+        border-left-color: #fd7e14;
+        background: linear-gradient(135deg, rgba(253,126,20,0.1), rgba(253,126,20,0.05));
+    }
+    
+    .alert-card.alert-low {
+        border-left-color: #ffc107;
+        background: linear-gradient(135deg, rgba(255,193,7,0.1), rgba(255,193,7,0.05));
+    }
+    
+    .alert-card.alert-critical {
+        border-left-color: #6f42c1;
+        background: linear-gradient(135deg, rgba(111,66,193,0.1), rgba(111,66,193,0.05));
+    }
+    
+    .severity-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .cat-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-bell text-warning"></i> Health Alerts</h1>
+                <div>
+                    <button class="btn btn-success" onclick="markAllResolved()">
+                        <i class="fas fa-check-double"></i> Mark All Resolved
+                    </button>
+                    <a href="{% url 'dashboard:home' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if alerts %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> All Alerts ({{ alerts.count }})</h5>
+                </div>
+                <div class="card-body">
+                    {% for alert in alerts %}
+                    <div class="alert-card alert-{{ alert.severity }} p-3 {% if alert.is_resolved %}opacity-50{% endif %}">
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                {% if alert.cat.photo %}
+                                    <img src="{{ alert.cat.photo.url }}" alt="{{ alert.cat.name }}" class="cat-avatar">
+                                {% else %}
+                                    <div class="cat-avatar bg-primary d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-cat text-white"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h6 class="mb-0 me-2">{{ alert.title }}</h6>
+                                    <span class="badge bg-{{ alert.severity }} severity-badge">
+                                        {% if alert.severity == 'high' %}🔴 High
+                                        {% elif alert.severity == 'medium' %}🟠 Medium
+                                        {% elif alert.severity == 'low' %}🟡 Low
+                                        {% elif alert.severity == 'critical' %}🟣 Critical
+                                        {% endif %}
+                                    </span>
+                                    {% if alert.is_resolved %}
+                                        <span class="badge bg-success ms-2">✅ Resolved</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-muted mb-1">
+                                    <strong>{{ alert.cat.name }}</strong> - {{ alert.message }}
+                                </p>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> {{ alert.created_at|timesince }} ago
+                                    {% if alert.resolved_at %}
+                                        | Resolved {{ alert.resolved_at|timesince }} ago
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                {% if not alert.is_resolved %}
+                                    <button class="btn btn-sm btn-success" onclick="resolveAlert({{ alert.id }})">
+                                        <i class="fas fa-check"></i> Mark Resolved
+                                    </button>
+                                {% endif %}
+                                <a href="{% url 'cat_profiles:detail' alert.cat.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View Cat
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                    <h4>No Health Alerts</h4>
+                    <p class="text-muted">Great news! Your cats are doing well with no active health alerts.</p>
+                    <a href="{% url 'emotion_detection:detection' %}" class="btn btn-primary">
+                        <i class="fas fa-brain"></i> Run Emotion Detection
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function resolveAlert(alertId) {
+    if (confirm('Mark this alert as resolved?')) {
+        fetch('{% url "dashboard:alerts" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: `action=resolve&alert_id=${alertId}`
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error resolving alert');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error resolving alert');
+        });
+    }
+}
+
+function markAllResolved() {
+    if (confirm('Mark all alerts as resolved?')) {
+        fetch('{% url "dashboard:alerts" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: 'action=resolve_all'
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error resolving alerts');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error resolving alerts');
+        });
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

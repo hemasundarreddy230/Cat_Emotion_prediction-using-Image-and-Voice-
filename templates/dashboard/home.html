@@ -1,0 +1,625 @@
+{% extends 'base.html' %}
+
+{% block title %}Professional Dashboard - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Professional Stats Cards */
+    .stats-card {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: var(--radius-xl);
+        padding: 2.5rem 2rem;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        overflow: hidden;
+        border: none;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.15), transparent);
+        transform: rotate(45deg);
+        transition: all 0.6s ease;
+        opacity: 0;
+    }
+
+    .stats-card:hover::before {
+        opacity: 1;
+        transform: rotate(45deg) translate(50%, 50%);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-15px) scale(1.05);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .stats-card:nth-child(1) { background: var(--primary-gradient); }
+    .stats-card:nth-child(2) { background: var(--secondary-gradient); }
+    .stats-card:nth-child(3) { background: var(--accent-gradient); }
+    .stats-card:nth-child(4) { background: var(--success-gradient); }
+
+    .stats-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.9;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    }
+
+    .stats-number {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        font-family: var(--font-secondary);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .stats-label {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Professional Welcome Section */
+    .welcome-section {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(240, 147, 251, 0.8));
+        border-radius: var(--radius-xl);
+        padding: 4rem 3rem;
+        text-align: center;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(20px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .welcome-section::before {
+        content: '🐱';
+        position: absolute;
+        font-size: 12rem;
+        opacity: 0.05;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .welcome-title {
+        font-family: var(--font-secondary);
+        font-weight: 800;
+        font-size: 3rem;
+        color: white;
+        margin-bottom: 1rem;
+        text-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    }
+
+    .welcome-subtitle {
+        font-size: 1.25rem;
+        color: white;
+        font-weight: 500;
+        margin-bottom: 2rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Professional Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 3rem;
+    }
+
+    .quick-action-btn {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: var(--radius-full);
+        padding: 1.25rem 2rem;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: var(--shadow-md);
+    }
+
+    .quick-action-btn:nth-child(1) { background: var(--primary-gradient); }
+    .quick-action-btn:nth-child(2) { background: var(--secondary-gradient); }
+    .quick-action-btn:nth-child(3) { background: var(--accent-gradient); }
+    .quick-action-btn:nth-child(4) { background: var(--success-gradient); }
+    .quick-action-btn:nth-child(5) { background: var(--warning-gradient); }
+    .quick-action-btn:nth-child(6) { background: var(--danger-gradient); }
+
+    .quick-action-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.3s ease;
+    }
+
+    .quick-action-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .quick-action-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+        color: white;
+    }
+
+    /* Professional Emotion Badges */
+    .emotion-badge {
+        display: inline-block;
+        padding: 0.5rem 1.25rem;
+        border-radius: var(--radius-full);
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin: 0.25rem;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .emotion-Happy { background: var(--success-gradient); }
+    .emotion-Angry { background: var(--danger-gradient); }
+    .emotion-Sad { background: var(--accent-gradient); }
+    .emotion-Scared { background: var(--secondary-gradient); }
+    .emotion-Normal { background: var(--dark-gradient); }
+    .emotion-Resting { background: var(--success-gradient); }
+    .emotion-Paining { background: var(--warning-gradient); }
+
+    /* Professional Alert Cards */
+    .alert-card {
+        border: none;
+        border-radius: var(--radius-lg);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        background: white;
+        box-shadow: var(--shadow-md);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .alert-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--primary-gradient);
+    }
+
+    .alert-card.alert-high::before { background: var(--danger-gradient); }
+    .alert-card.alert-medium::before { background: var(--warning-gradient); }
+    .alert-card.alert-low::before { background: var(--success-gradient); }
+
+    .alert-card:hover {
+        transform: translateX(10px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    /* Professional Chart Container */
+    .chart-container {
+        position: relative;
+        height: 350px;
+        margin: 2rem 0;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: var(--radius-lg);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Professional Cat Cards */
+    .cat-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+    }
+
+    .cat-card:hover {
+        transform: translateY(-10px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .cat-card .card-img-top {
+        height: 250px;
+        object-fit: cover;
+        transition: all 0.3s ease;
+    }
+
+    .cat-card:hover .card-img-top {
+        transform: scale(1.05);
+    }
+
+    .cat-card .card-body {
+        padding: 2rem;
+    }
+
+    .cat-card .card-title {
+        font-family: var(--font-secondary);
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--gray-800);
+        margin-bottom: 1rem;
+    }
+
+    /* Professional Empty States */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-500);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 2rem;
+        opacity: 0.5;
+    }
+
+    .empty-state h4 {
+        font-family: var(--font-secondary);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--gray-700);
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .welcome-title {
+            font-size: 2rem;
+        }
+        
+        .welcome-section {
+            padding: 2rem 1.5rem;
+        }
+        
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Professional Welcome Section -->
+<div class="welcome-section fade-in">
+    <div class="welcome-content">
+        <h1 class="welcome-title">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+        <p class="welcome-subtitle">Monitor your cats' emotions and well-being with AI-powered insights</p>
+        
+        <div class="quick-actions">
+            <a href="{% url 'emotion_detection:detection' %}" class="quick-action-btn">
+                <i class="fas fa-brain"></i> Detect Emotion
+            </a>
+            <a href="{% url 'prediction_service:community_feed' %}" class="quick-action-btn">
+                <i class="fas fa-users"></i> Community
+            </a>
+            <a href="{% url 'prediction_service:create_post' %}" class="quick-action-btn">
+                <i class="fas fa-camera"></i> Share Photo
+            </a>
+            <a href="{% url 'prediction_service:veterinary_map' %}" class="quick-action-btn">
+                <i class="fas fa-map-marked-alt"></i> Find Vets
+            </a>
+            <a href="{% url 'cat_profiles:add' %}" class="quick-action-btn">
+                <i class="fas fa-plus"></i> Add Cat
+            </a>
+            <a href="{% url 'ai_assistant:chat' %}" class="quick-action-btn">
+                <i class="fas fa-robot"></i> Ask AI
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Statistics Cards -->
+<div class="row mb-5">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card slide-in-left">
+            <div class="stats-icon">
+                <i class="fas fa-paw"></i>
+            </div>
+            <div class="stats-number">{{ total_cats }}</div>
+            <div class="stats-label">Registered Cats</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card slide-in-left" style="animation-delay: 0.1s;">
+            <div class="stats-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="stats-number">{{ total_predictions }}</div>
+            <div class="stats-label">AI Predictions</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card slide-in-left" style="animation-delay: 0.2s;">
+            <div class="stats-icon">
+                <i class="fas fa-images"></i>
+            </div>
+            <div class="stats-number">{{ total_photos }}</div>
+            <div class="stats-label">Photos Uploaded</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stats-card slide-in-left" style="animation-delay: 0.3s;">
+            <div class="stats-icon">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="stats-number">{{ active_alerts.count }}</div>
+            <div class="stats-label">Health Alerts</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Professional Recent Predictions -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history me-2"></i> Recent AI Predictions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_predictions %}
+                    {% for prediction in recent_predictions %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded" style="background: rgba(102, 126, 234, 0.05);">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-2 fw-bold">{{ prediction.cat.name }}</h6>
+                                <span class="emotion-badge emotion-{{ prediction.predicted_emotion }}">
+                                    {{ prediction.predicted_emotion }}
+                                </span>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>{{ prediction.created_at|timesince }} ago
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="h4 mb-0 text-gradient">{{ prediction.confidence|floatformat:1 }}%</div>
+                                <small class="text-muted fw-bold">CONFIDENCE</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="text-center mt-4">
+                        <a href="{% url 'emotion_detection:history' %}" class="btn btn-primary">
+                            <i class="fas fa-chart-line me-2"></i>View All Predictions
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-brain"></i>
+                        <h4>No Predictions Yet</h4>
+                        <p>Start by detecting your cat's emotions with our AI technology!</p>
+                        <a href="{% url 'emotion_detection:detection' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-rocket me-2"></i>Start AI Detection
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Professional Health Alerts -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-shield-alt me-2"></i> Health Monitoring</h5>
+            </div>
+            <div class="card-body">
+                {% if active_alerts %}
+                    {% for alert in active_alerts %}
+                        <div class="alert-card alert-{{ alert.severity }} p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-2 fw-bold">{{ alert.title }}</h6>
+                                    <p class="mb-2 text-muted">{{ alert.message }}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-paw me-1"></i>{{ alert.cat.name }} • 
+                                        <i class="fas fa-clock me-1"></i>{{ alert.created_at|timesince }} ago
+                                    </small>
+                                </div>
+                                <span class="badge badge-{{ alert.severity }}">
+                                    {{ alert.get_severity_display|upper }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="text-center mt-4">
+                        <a href="{% url 'dashboard:alerts' %}" class="btn btn-warning">
+                            <i class="fas fa-bell me-2"></i>Manage All Alerts
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <h4 class="text-success">All Clear!</h4>
+                        <p>No active health alerts. Your cats are doing wonderfully!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Emotion Trends Chart -->
+{% if emotion_trends %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i> Emotion Analytics (Last 7 Days)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="emotionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Professional Cat Profiles -->
+{% if user_cats %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-paw me-2"></i> Your Cat Family</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for cat in user_cats %}
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="cat-card card h-100">
+                                {% if cat.photo %}
+                                    <img src="{{ cat.photo.url }}" class="card-img-top">
+                                {% else %}
+                                    <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 250px; background: var(--primary-gradient);">
+                                        <i class="fas fa-cat fa-4x text-white"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ cat.name }}</h5>
+                                    <p class="card-text">
+                                        <span class="badge bg-primary me-2">{{ cat.breed|default:"Mixed Breed" }}</span>
+                                        <span class="badge bg-secondary">{{ cat.age }} months</span>
+                                    </p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'cat_profiles:detail' cat.id %}" class="btn btn-primary">
+                                            <i class="fas fa-eye me-2"></i>View Profile
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-4">
+                    <a href="{% url 'cat_profiles:add' %}" class="btn btn-success btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add New Cat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="empty-state">
+                    <i class="fas fa-paw"></i>
+                    <h4>No Cats Registered</h4>
+                    <p>Start your journey by adding your first feline friend to the system!</p>
+                    <a href="{% url 'cat_profiles:add' %}" class="btn btn-success btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add Your First Cat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Emotion trends chart
+{% if emotion_trends %}
+const ctx = document.getElementById('emotionChart').getContext('2d');
+const emotionChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for trend in emotion_trends %}'{{ trend.predicted_emotion }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for trend in emotion_trends %}{{ trend.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA726', '#66BB6A',
+                '#EF5350', '#AB47BC', '#FF8A65', '#78909C', '#A1887F'
+            ],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true
+                }
+            }
+        }
+    }
+});
+{% endif %}
+
+// Add staggered animation to cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

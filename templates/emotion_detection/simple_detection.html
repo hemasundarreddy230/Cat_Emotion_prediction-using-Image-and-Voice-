@@ -1,0 +1,1761 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Emotion Detection - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Professional Detection Interface */
+    .detection-hero {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: var(--radius-xl);
+        padding: 4rem 3rem;
+        text-align: center;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detection-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        transform: rotate(45deg);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+        0%, 100% { transform: rotate(45deg) translateX(-100%); }
+        50% { transform: rotate(45deg) translateX(100%); }
+    }
+
+    .detection-hero h1 {
+        font-family: var(--font-secondary);
+        font-weight: 800;
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .detection-hero p {
+        font-size: 1.25rem;
+        opacity: 0.95;
+        margin-bottom: 0;
+    }
+
+    /* Professional Cat Selection */
+    .cat-selector {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .cat-selector h5 {
+        font-family: var(--font-secondary);
+        font-weight: 700;
+        color: var(--gray-800);
+        margin-bottom: 2rem;
+        font-size: 1.5rem;
+    }
+
+    .cat-option {
+        background: white;
+        border: 2px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cat-option::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-gradient);
+        transition: all 0.3s ease;
+        z-index: 0;
+        opacity: 0.1;
+    }
+
+    .cat-option:hover::before {
+        left: 0;
+    }
+
+    .cat-option:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .cat-option.selected {
+        background: var(--primary-gradient);
+        color: white;
+        border-color: var(--primary-color);
+        box-shadow: var(--shadow-xl);
+        transform: scale(1.02);
+    }
+
+    .cat-option .form-check {
+        position: relative;
+        z-index: 1;
+    }
+
+    .cat-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: var(--shadow-md);
+        margin-right: 1.5rem;
+    }
+
+    /* Professional Upload Areas */
+    .upload-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--radius-xl);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .upload-area {
+        border: 3px dashed var(--gray-300);
+        border-radius: var(--radius-lg);
+        padding: 4rem 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        background: rgba(102, 126, 234, 0.02);
+    }
+
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.05);
+        transform: scale(1.02);
+    }
+
+    .upload-area.dragover {
+        border-color: var(--secondary-color);
+        background: var(--secondary-gradient);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .upload-icon {
+        font-size: 4rem;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        animation: float 3s ease-in-out infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+
+    .upload-area h5 {
+        font-family: var(--font-secondary);
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: var(--gray-800);
+    }
+
+    .upload-area p {
+        color: var(--gray-600);
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+
+    /* Professional Results Section */
+    .results-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--radius-xl);
+        padding: 3rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .emotion-display {
+        font-family: var(--font-secondary);
+        font-size: 4rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
+    }
+
+    .confidence-display {
+        font-size: 2rem;
+        font-weight: 600;
+        text-align: center;
+        color: var(--gray-700);
+        margin-bottom: 2rem;
+    }
+
+    .prediction-details {
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+
+    .emotion-bar {
+        background: var(--gray-200);
+        border-radius: var(--radius-full);
+        height: 40px;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .emotion-bar-fill {
+        background: var(--primary-gradient);
+        height: 100%;
+        border-radius: var(--radius-full);
+        transition: width 1.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.5rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Professional Loading States */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(10px);
+    }
+
+    .loading-content {
+        text-align: center;
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-xl);
+        padding: 3rem;
+        backdrop-filter: blur(20px);
+    }
+
+    .loading-spinner {
+        width: 80px;
+        height: 80px;
+        border: 8px solid rgba(255,255,255,0.2);
+        border-top: 8px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 2rem;
+    }
+
+    .loading-content h4 {
+        font-family: var(--font-secondary);
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    /* Professional Tabs */
+    .nav-tabs {
+        border: none;
+        margin-bottom: 2rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-radius: var(--radius-full);
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--gray-700);
+        font-weight: 600;
+        padding: 1rem 2rem;
+        margin-right: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-tabs .nav-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-gradient);
+        transition: all 0.3s ease;
+        z-index: 0;
+    }
+
+    .nav-tabs .nav-link:hover::before,
+    .nav-tabs .nav-link.active::before {
+        left: 0;
+    }
+
+    .nav-tabs .nav-link:hover,
+    .nav-tabs .nav-link.active {
+        color: white;
+        background: transparent;
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .nav-tabs .nav-link span {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Professional Instructions */
+    .instructions-card {
+        background: linear-gradient(135deg, rgba(67, 233, 123, 0.1), rgba(56, 249, 215, 0.1));
+        border: 1px solid rgba(67, 233, 123, 0.2);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .instructions-card h5 {
+        color: var(--success-color);
+        font-family: var(--font-secondary);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    .instructions-card ol {
+        margin-bottom: 0;
+    }
+
+    .instructions-card li {
+        margin-bottom: 0.75rem;
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .detection-hero {
+            padding: 2rem 1.5rem;
+        }
+        
+        .detection-hero h1 {
+            font-size: 2.5rem;
+        }
+        
+        .cat-selector,
+        .upload-section,
+        .results-section {
+            padding: 1.5rem;
+        }
+        
+        .upload-area {
+            padding: 2rem 1rem;
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+        }
+        
+        .emotion-display {
+            font-size: 3rem;
+        }
+        
+        .confidence-display {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Professional Detection Hero -->
+<div class="detection-hero fade-in">
+    <h1 style="color:#fff !important;">🧠 AI Emotion Detection</h1>
+
+    <p>Advanced artificial intelligence technology to understand your cat's emotional state through image and audio analysis</p>
+</div>
+
+<!-- Professional Cat Selection -->
+{% if user_cats %}
+<div class="cat-selector slide-in-left">
+    <h5><i class="fas fa-paw me-2"></i>Select Your Cat</h5>
+    
+    <form id="catSelectionForm">
+        <div class="row">
+            {% for cat in user_cats %}
+            <div class="col-lg-6 mb-3">
+                <div class="cat-option" data-cat-id="{{ cat.id }}">
+                    <div class="form-check d-flex align-items-center">
+                        <input class="form-check-input me-3" type="radio" name="selected_cat" 
+                               id="cat{{ cat.id }}" value="{{ cat.id }}">
+                        <label class="form-check-label d-flex align-items-center w-100" for="cat{{ cat.id }}">
+                            {% if cat.photo %}
+                                <img src="{{ cat.photo.url }}" alt="{{ cat.name }}" class="cat-avatar">
+                            {% else %}
+                                <div class="cat-avatar bg-primary d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-cat text-white"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-1 fw-bold">{{ cat.name }}</h6>
+                                <small class="text-muted">{{ cat.breed|default:"Mixed Breed" }} • {{ cat.age }} months</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </form>
+    
+    <!-- Status Display -->
+    <div id="statusDisplay" class="mt-3">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Ready to Start:</strong> Please select a cat to enable AI emotion detection
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="cat-selector slide-in-left">
+    <div class="text-center py-5">
+        <i class="fas fa-paw fa-4x text-muted mb-3"></i>
+        <h4>No Cats Registered</h4>
+        <p class="text-muted mb-4">You need to register at least one cat before using emotion detection.</p>
+        <a href="{% url 'cat_profiles:add' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>Add Your First Cat
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% if user_cats %}
+<!-- Progress Indicator -->
+<div class="upload-section mb-4">
+    <h5 class="text-center mb-4"><i class="fas fa-list-check me-2"></i>Progress Checklist</h5>
+    <div class="row">
+        <div class="col-md-4">
+            <div id="step1Status" class="alert alert-warning text-center">
+                <i class="fas fa-paw fa-2x mb-2"></i>
+                <h6>Step 1: Select Cat</h6>
+                <small>Choose your cat from the list above</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div id="step2Status" class="alert alert-secondary text-center">
+                <i class="fas fa-robot fa-2x mb-2"></i>
+                <h6>Step 2: Choose Method</h6>
+                <small>Select Image or Audio detection</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div id="step3Status" class="alert alert-secondary text-center">
+                <i class="fas fa-upload fa-2x mb-2"></i>
+                <h6>Step 3: Upload & Analyze</h6>
+                <small>Upload file and click Analyze button</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Instructions -->
+<div class="instructions-card slide-in-right"
+     style="color:#ffffff !important;">
+    <h5 style="color:#ffffff !important;">
+        <i class="fas fa-lightbulb me-2"
+           style="color:#ffffff !important;"></i>
+        How to Use AI Emotion Detection
+    </h5>
+
+    <ol style="color:#ffffff !important;">
+        <li style="color:#ffffff !important;">
+            <strong style="color:#ffffff !important;">Select Your Cat:</strong>
+            Choose your cat using the radio buttons above
+        </li>
+        <li style="color:#ffffff !important;">
+            <strong style="color:#ffffff !important;">Choose Detection Method:</strong>
+            Select either Image or Audio detection
+        </li>
+        <li style="color:#ffffff !important;">
+            <strong style="color:#ffffff !important;">Upload File:</strong>
+            Upload a clear photo or audio recording of your cat
+        </li>
+        <li style="color:#ffffff !important;">
+            <strong style="color:#ffffff !important;">AI Analysis:</strong>
+            Our advanced AI will analyze and predict emotions
+        </li>
+        <li style="color:#ffffff !important;">
+            <strong style="color:#ffffff !important;">View Results:</strong>
+            Get detailed emotion predictions with confidence scores
+        </li>
+        <li style="color:#ffffff !important;">
+            <strong style="color:#ffffff !important;">Provide Feedback:</strong>
+            Help the AI learn by confirming or correcting predictions
+        </li>
+    </ol>
+</div>
+
+
+
+<!-- Learning Statistics -->
+<div class="upload-section slide-in-left" style="animation-delay: 0.1s;">
+    <h5 class="text-center mb-4"><i class="fas fa-globe me-2"></i>Global AI Learning Progress</h5>
+    <p class="text-center text-muted mb-3">
+        <i class="fas fa-info-circle me-1"></i>
+        This shows learning data from all users across the platform
+    </p>
+    <div id="learningStats" class="text-center">
+        <button class="btn btn-outline-primary" onclick="loadLearningStats()">
+            <i class="fas fa-chart-line me-2"></i>View Global Learning Statistics
+        </button>
+    </div>
+</div>
+
+<!-- Professional Detection Methods -->
+<div class="upload-section slide-in-left" style="animation-delay: 0.2s;">
+    <h5 class="text-center mb-4"><i class="fas fa-robot me-2"></i>Choose AI Detection Method</h5>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <button class="btn btn-primary btn-lg w-100" onclick="showImageUpload()">
+                <i class="fas fa-camera fa-2x mb-2 d-block"></i>
+                <strong>_Image Detection_</strong>
+              
+            </button>
+        </div>
+        <div class="col-md-6 mb-4">
+            <button class="btn btn-success btn-lg w-100" onclick="showAudioUpload()">
+                <i class="fas fa-microphone fa-2x mb-2 d-block"></i>
+                <strong>_Audio Detection_</strong>
+               
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Upload Areas -->
+<div class="upload-section" id="uploadSection" style="display: none;">
+    <h5 class="text-center mb-4"><i class="fas fa-cloud-upload-alt me-2"></i>Upload Your File</h5>
+    
+    <!-- Image Upload -->
+    <div id="imageUploadSection" style="display: none;">
+        <div class="upload-area" onclick="document.getElementById('imageFileInput').click();">
+            <div class="upload-icon">
+                <i class="fas fa-image"></i>
+            </div>
+            <h5>Upload Cat Image</h5>
+            <p>Click here or drag and drop your cat's photo<br>
+            <small>Supports JPG, PNG files (Max 50MB)</small><br>
+            <small class="text-warning"><i class="fas fa-exclamation-triangle"></i> Only cat images accepted</small></p>
+            <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+        </div>
+        
+        <div class="text-center mt-3">
+            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('imageFileInput').click();">
+                <i class="fas fa-folder-open me-2"></i>Browse Image Files
+            </button>
+        </div>
+
+        <div id="imagePreview" class="text-center mt-4" style="display: none;">
+            <img id="previewImg" src="" alt="Preview" style="max-width: 400px; max-height: 400px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+            <div class="mt-4 p-4 bg-light rounded">
+                <h6 class="text-success mb-3"><i class="fas fa-check-circle me-2"></i>Image Ready for Analysis</h6>
+               <button class="btn btn-primary btn-lg"
+        style="color:#fff !important;"
+        id="imageAnalyzeBtn"
+        onclick="predictImage()"
+        disabled>
+    <i class="fas fa-brain me-2"
+       style="color:#fff !important;"></i>
+    🧠 Analyze Image Emotion
+</button>
+
+                <p class="text-muted mt-2 mb-0">Click the button above to start AI emotion detection</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Upload -->
+    <div id="audioUploadSection" style="display: none;">
+        <div class="upload-area" onclick="document.getElementById('audioFileInput').click();">
+            <div class="upload-icon">
+                <i class="fas fa-volume-up"></i>
+            </div>
+            <h5>Upload Cat Audio</h5>
+            <p>Click here or drag and drop your cat's audio<br>
+            <small>Supports MP3, WAV files (Max 50MB)</small></p>
+            <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
+        </div>
+        
+        <div class="text-center mt-3">
+            <button type="button" class="btn btn-outline-success" onclick="document.getElementById('audioFileInput').click();">
+                <i class="fas fa-folder-open me-2"></i>Browse Audio Files
+            </button>
+        </div>
+
+        <div id="audioPreview" class="text-center mt-4" style="display: none;">
+            <audio id="previewAudio" controls style="width: 100%; max-width: 500px; border-radius: var(--radius-lg);">
+                Your browser does not support the audio element.
+            </audio>
+            <div class="mt-4 p-4 bg-light rounded">
+                <h6 class="text-success mb-3"><i class="fas fa-check-circle me-2"></i>Audio Ready for Analysis</h6>
+                <button class="btn btn-success btn-lg" id="audioAnalyzeBtn" onclick="predictAudio()" disabled>
+                    <i class="fas fa-brain me-2"></i>🧠 Analyze Audio Emotion
+                </button>
+                <p class="text-muted mt-2 mb-0">Click the button above to start AI emotion detection</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Results Section -->
+<div class="results-section" id="resultsSection" style="display: none;">
+    <h5 class="text-center mb-4"><i class="fas fa-chart-bar me-2"></i>AI Analysis Results</h5>
+    <div id="predictionResults"></div>
+</div>
+
+<!-- Professional Loading Overlay -->
+<div id="loadingDiv" class="loading-overlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h4>Analyzing Emotion...</h4>
+        <p>Our AI is processing your cat's emotional state</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Predictions -->
+{% if recent_predictions %}
+<div class="upload-section mt-4">
+    <h5><i class="fas fa-history me-2"></i>Recent AI Predictions</h5>
+    <div class="row">
+        {% for prediction in recent_predictions %}
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card h-100" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                <div class="card-body text-center">
+                    <h6 class="card-title fw-bold">{{ prediction.cat.name }}</h6>
+                    <div class="mb-2">
+                        <span class="badge" style="background: var(--primary-gradient); font-size: 1rem; padding: 0.5rem 1rem;">
+                            {{ prediction.predicted_emotion }}
+                        </span>
+                    </div>
+                    <div class="h5 text-gradient mb-2">{{ prediction.confidence|floatformat:1 }}%</div>
+                    <small class="text-muted">{{ prediction.created_at|timesince }} ago</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+        <a href="{% url 'emotion_detection:history' %}" class="btn btn-outline-primary btn-lg">
+            <i class="fas fa-chart-line me-2"></i>View All Predictions
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- CONSOLIDATED SCRIPT - FIXED FILE UPLOAD FUNCTIONALITY -->
+<script>
+// Global variables
+let selectedCatId = null;
+let currentDetectionType = null;
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Emotion Detection page loaded');
+    initializeCatSelection();
+    console.log('✅ Page initialization complete');
+});
+
+// Initialize cat selection
+function initializeCatSelection() {
+    document.querySelectorAll('input[name="selected_cat"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            selectedCatId = this.value;
+            const catName = this.closest('.cat-option').querySelector('h6').textContent.trim();
+            console.log('🐱 Selected cat:', catName, 'ID:', selectedCatId);
+            
+            // Visual feedback
+            document.querySelectorAll('.cat-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            this.closest('.cat-option').classList.add('selected');
+            
+            // Update status
+            document.getElementById('statusDisplay').innerHTML = 
+                `<div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Cat Selected:</strong> ${catName} is ready for AI emotion detection
+                </div>`;
+            
+            // Update progress indicator
+            document.getElementById('step1Status').className = 'alert alert-success text-center';
+            document.getElementById('step1Status').innerHTML = 
+                `<i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h6>✅ Step 1: Cat Selected</h6>
+                <small>${catName} is ready</small>`;
+        });
+    });
+}
+
+// Show image upload section
+function showImageUpload() {
+    if (!selectedCatId) {
+        alert('Please select a cat first!');
+        return;
+    }
+    
+    currentDetectionType = 'image';
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('imageUploadSection').style.display = 'block';
+    document.getElementById('audioUploadSection').style.display = 'none';
+    
+    // Update progress indicator
+    document.getElementById('step2Status').className = 'alert alert-success text-center';
+    document.getElementById('step2Status').innerHTML = 
+        `<i class="fas fa-check-circle fa-2x mb-2"></i>
+        <h6>✅ Step 2: Image Detection</h6>
+        <small>Ready to upload image</small>`;
+    
+    // Initialize image upload functionality
+    setTimeout(initializeImageUpload, 100);
+}
+
+// Show audio upload section
+function showAudioUpload() {
+    if (!selectedCatId) {
+        alert('Please select a cat first!');
+        return;
+    }
+    
+    currentDetectionType = 'audio';
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('audioUploadSection').style.display = 'block';
+    document.getElementById('imageUploadSection').style.display = 'none';
+    
+    // Update progress indicator
+    document.getElementById('step2Status').className = 'alert alert-success text-center';
+    document.getElementById('step2Status').innerHTML = 
+        `<i class="fas fa-check-circle fa-2x mb-2"></i>
+        <h6>✅ Step 2: Audio Detection</h6>
+        <small>Ready to upload audio</small>`;
+    
+    // Initialize audio upload functionality
+    setTimeout(initializeAudioUpload, 100);
+}
+
+// Initialize image upload functionality
+function initializeImageUpload() {
+    const uploadArea = document.querySelector('#imageUploadSection .upload-area');
+    const fileInput = document.getElementById('imageFileInput');
+    const previewDiv = document.getElementById('imagePreview');
+    
+    if (!uploadArea || !fileInput) {
+        console.error('❌ Image upload elements not found');
+        return;
+    }
+    
+    console.log('🖼️ Initializing image upload');
+    
+    // Reset previous state
+    fileInput.value = '';
+    previewDiv.style.display = 'none';
+    
+    // File input change handler
+    fileInput.onchange = function(e) {
+        console.log('📸 Image file selected via input');
+        const file = e.target.files[0];
+        if (file) {
+            handleImageFile(file);
+        }
+    };
+    
+    // Click to browse
+    uploadArea.onclick = function() {
+        console.log('📁 Upload area clicked');
+        fileInput.click();
+    };
+    
+    // Drag and drop handlers
+    uploadArea.ondragover = function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    };
+    
+    uploadArea.ondragleave = function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    };
+    
+    uploadArea.ondrop = function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        console.log('📤 File dropped');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type.startsWith('image/')) {
+                // Set the file to input
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                handleImageFile(file);
+            } else {
+                alert('Please drop a valid image file');
+            }
+        }
+    };
+    
+    console.log('✅ Image upload initialized');
+}
+
+// Initialize audio upload functionality
+function initializeAudioUpload() {
+    const uploadArea = document.querySelector('#audioUploadSection .upload-area');
+    const fileInput = document.getElementById('audioFileInput');
+    const previewDiv = document.getElementById('audioPreview');
+    
+    if (!uploadArea || !fileInput) {
+        console.error('❌ Audio upload elements not found');
+        return;
+    }
+    
+    console.log('🎵 Initializing audio upload');
+    
+    // Reset previous state
+    fileInput.value = '';
+    previewDiv.style.display = 'none';
+    
+    // File input change handler
+    fileInput.onchange = function(e) {
+        console.log('🎵 Audio file selected via input');
+        const file = e.target.files[0];
+        if (file) {
+            handleAudioFile(file);
+        }
+    };
+    
+    // Click to browse
+    uploadArea.onclick = function() {
+        console.log('📁 Audio upload area clicked');
+        fileInput.click();
+    };
+    
+    // Drag and drop handlers
+    uploadArea.ondragover = function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    };
+    
+    uploadArea.ondragleave = function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    };
+    
+    uploadArea.ondrop = function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        console.log('📤 Audio file dropped');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type.startsWith('audio/')) {
+                // Set the file to input
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                handleAudioFile(file);
+            } else {
+                alert('Please drop a valid audio file');
+            }
+        }
+    };
+    
+    console.log('✅ Audio upload initialized');
+}
+
+// File validation constants (updated - removed dimension restrictions)
+const VALIDATION_CONFIG = {
+    image: {
+        allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'],
+        allowedExtensions: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'],
+        maxSize: 50 * 1024 * 1024, // 50MB (increased)
+        minSize: 1024 // 1KB
+        // Removed dimension restrictions
+    },
+    audio: {
+        allowedTypes: ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/ogg', 'audio/flac', 'audio/aac'],
+        allowedExtensions: ['.wav', '.mp3', '.m4a', '.ogg', '.flac', '.aac'],
+        maxSize: 50 * 1024 * 1024, // 50MB
+        minSize: 1024 // 1KB
+    }
+};
+
+// Comprehensive file validation function
+function validateFile(file, type) {
+    const errors = [];
+    const config = VALIDATION_CONFIG[type];
+    
+    if (!config) {
+        errors.push('Invalid file type configuration');
+        return errors;
+    }
+    
+    // Check file size
+    if (file.size > config.maxSize) {
+        errors.push(`File too large. Maximum size: ${(config.maxSize / (1024 * 1024)).toFixed(1)}MB`);
+    }
+    
+    if (file.size < config.minSize) {
+        errors.push(`File too small. Minimum size: ${(config.minSize / 1024).toFixed(1)}KB`);
+    }
+    
+    // Check file extension
+    const fileName = file.name.toLowerCase();
+    const hasValidExtension = config.allowedExtensions.some(ext => fileName.endsWith(ext));
+    
+    if (!hasValidExtension) {
+        errors.push(`Invalid file format. Allowed formats: ${config.allowedExtensions.join(', ')}`);
+    }
+    
+    // Check MIME type
+    if (!config.allowedTypes.includes(file.type)) {
+        errors.push(`Invalid file type: ${file.type}. Allowed types: ${config.allowedTypes.join(', ')}`);
+    }
+    
+    return errors;
+}
+
+// Validate image dimensions (removed - now accepts any size)
+function validateImageDimensions(file) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        
+        img.onload = function() {
+            URL.revokeObjectURL(url);
+            // No dimension validation - accept any size
+            resolve({
+                valid: true,
+                errors: [],
+                dimensions: { width: this.width, height: this.height }
+            });
+        };
+        
+        img.onerror = function() {
+            URL.revokeObjectURL(url);
+            resolve({
+                valid: false,
+                errors: ['Invalid or corrupted image file'],
+                dimensions: null
+            });
+        };
+        
+        img.src = url;
+    });
+}
+
+// Show validation errors
+function showValidationErrors(errors, type) {
+    const errorHtml = `
+        <div class="alert alert-danger mt-3">
+            <h6><i class="fas fa-exclamation-triangle me-2"></i>${type.charAt(0).toUpperCase() + type.slice(1)} Validation Failed</h6>
+            <ul class="mb-0">
+                ${errors.map(error => `<li>${error}</li>`).join('')}
+            </ul>
+            <small class="mt-2 d-block">
+                <strong>Tip:</strong> Make sure your ${type} file meets all requirements above.
+            </small>
+        </div>
+    `;
+    
+    // Show error in appropriate preview div
+    const previewDiv = document.getElementById(type === 'image' ? 'imagePreview' : 'audioPreview');
+    previewDiv.innerHTML = errorHtml;
+    previewDiv.style.display = 'block';
+    
+    // Update status
+    const statusDiv = document.getElementById('step3Status');
+    statusDiv.className = 'alert alert-danger text-center';
+    statusDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+        <h6>❌ ${type.charAt(0).toUpperCase() + type.slice(1)} Validation Failed</h6>
+        <small>Please fix the errors above and try again</small>
+    `;
+}
+
+// Handle image file processing with comprehensive validation
+async function handleImageFile(file) {
+    console.log('📸 Processing image file:', file.name, file.type, file.size);
+    
+    // Basic validation
+    const basicErrors = validateFile(file, 'image');
+    if (basicErrors.length > 0) {
+        showValidationErrors(basicErrors, 'image');
+        document.getElementById('imageFileInput').value = '';
+        return;
+    }
+    
+    // Dimension validation
+    const dimensionValidation = await validateImageDimensions(file);
+    if (!dimensionValidation.valid) {
+        showValidationErrors(dimensionValidation.errors, 'image');
+        document.getElementById('imageFileInput').value = '';
+        return;
+    }
+    
+    // Show preview with file info
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewDiv = document.getElementById('imagePreview');
+        const { width, height } = dimensionValidation.dimensions;
+        
+        previewDiv.innerHTML = `
+            <div class="validation-success mb-3">
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle me-2"></i>Image Validation Passed</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small><strong>File:</strong> ${file.name}</small><br>
+                            <small><strong>Size:</strong> ${(file.size / (1024 * 1024)).toFixed(2)} MB</small><br>
+                            <small><strong>Type:</strong> ${file.type}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <small><strong>Dimensions:</strong> ${width}x${height}px</small><br>
+                            <small><strong>Aspect Ratio:</strong> ${(width/height).toFixed(2)}:1</small><br>
+                            <small><strong>Status:</strong> <span class="text-success">✅ Valid</span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <img src="${e.target.result}" style="max-width: 400px; max-height: 400px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+            <div class="mt-4 p-4 bg-light rounded">
+                <h6 class="text-success mb-3"><i class="fas fa-check-circle me-2"></i>Image Ready for Analysis</h6>
+                <button class="btn btn-primary btn-lg" id="imageAnalyzeBtn" onclick="predictImage()">
+                    <i class="fas fa-brain me-2"></i>🧠 Analyze Image Emotion
+                </button>
+                <p class="text-muted mt-2 mb-0">Click the button above to start AI emotion detection</p>
+            </div>
+        `;
+        previewDiv.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+    
+    // Update progress indicator
+    document.getElementById('step3Status').className = 'alert alert-success text-center';
+    document.getElementById('step3Status').innerHTML = 
+        `<i class="fas fa-check-circle fa-2x mb-2"></i>
+        <h6>✅ Step 3: Image Validated & Ready!</h6>
+        <small>All validation checks passed. Click Analyze button below.</small>`;
+    
+    // Scroll to the analyze button after a short delay
+    setTimeout(() => {
+        const previewDiv = document.getElementById('imagePreview');
+        if (previewDiv) {
+            previewDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 1000);
+    
+    console.log('✅ Image file validated and processed successfully');
+}
+
+// Handle audio file processing with comprehensive validation
+function handleAudioFile(file) {
+    console.log('🎵 Processing audio file:', file.name, file.type, file.size);
+    
+    // Comprehensive validation
+    const errors = validateFile(file, 'audio');
+    if (errors.length > 0) {
+        showValidationErrors(errors, 'audio');
+        document.getElementById('audioFileInput').value = '';
+        return;
+    }
+    
+    // Show preview with file info
+    const url = URL.createObjectURL(file);
+    const previewDiv = document.getElementById('audioPreview');
+    
+    previewDiv.innerHTML = `
+        <div class="validation-success mb-3">
+            <div class="alert alert-success">
+                <h6><i class="fas fa-check-circle me-2"></i>Audio Validation Passed</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small><strong>File:</strong> ${file.name}</small><br>
+                        <small><strong>Size:</strong> ${(file.size / (1024 * 1024)).toFixed(2)} MB</small><br>
+                        <small><strong>Type:</strong> ${file.type}</small>
+                    </div>
+                    <div class="col-md-6">
+                        <small><strong>Duration:</strong> <span id="audioDuration">Loading...</span></small><br>
+                        <small><strong>Status:</strong> <span class="text-success">✅ Valid</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <audio controls style="width: 100%; max-width: 500px; border-radius: var(--radius-lg);" onloadedmetadata="updateAudioDuration(this)">
+            <source src="${url}" type="${file.type}">
+            Your browser does not support the audio element.
+        </audio>
+        <div class="mt-4 p-4 bg-light rounded">
+            <h6 class="text-success mb-3"><i class="fas fa-check-circle me-2"></i>Audio Ready for Analysis</h6>
+            <button class="btn btn-success btn-lg" id="audioAnalyzeBtn" onclick="predictAudio()">
+                <i class="fas fa-brain me-2"></i>🧠 Analyze Audio Emotion
+            </button>
+            <p class="text-muted mt-2 mb-0">Click the button above to start AI emotion detection</p>
+        </div>
+    `;
+    previewDiv.style.display = 'block';
+    
+    // Update progress indicator
+    document.getElementById('step3Status').className = 'alert alert-success text-center';
+    document.getElementById('step3Status').innerHTML = 
+        `<i class="fas fa-check-circle fa-2x mb-2"></i>
+        <h6>✅ Step 3: Audio Validated & Ready!</h6>
+        <small>All validation checks passed. Click Analyze button below.</small>`;
+    
+    // Scroll to the analyze button after a short delay
+    setTimeout(() => {
+        const previewDiv = document.getElementById('audioPreview');
+        if (previewDiv) {
+            previewDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 1000);
+    
+    console.log('✅ Audio file validated and processed successfully');
+}
+
+// Update audio duration display
+function updateAudioDuration(audioElement) {
+    const duration = audioElement.duration;
+    const minutes = Math.floor(duration / 60);
+    const seconds = Math.floor(duration % 60);
+    document.getElementById('audioDuration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Predict image emotion
+function predictImage() {
+    console.log('🔍 Starting image prediction...');
+    
+    if (!selectedCatId) {
+        alert('Please select a cat first!');
+        return;
+    }
+
+    const fileInput = document.getElementById('imageFileInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an image file!');
+        return;
+    }
+
+    console.log('📤 Sending image prediction request...');
+    console.log('Cat ID:', selectedCatId);
+    console.log('File:', file.name, file.type, file.size);
+
+    // Show loading
+    document.getElementById('loadingDiv').style.display = 'flex';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('imageAnalyzeBtn').disabled = true;
+
+    // Create form data
+    const formData = new FormData();
+    formData.append('cat_id', selectedCatId);
+    formData.append('image_file', file);
+
+    // Make request
+    fetch('{% url "emotion_detection:predict_image" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => {
+        console.log('📥 Response received:', response.status);
+        return response.json().then(data => {
+            if (!response.ok) {
+                // Handle validation errors
+                if (data.validation_errors) {
+                    const errorMsg = data.validation_errors.join('\n');
+                    throw new Error(`Validation failed:\n${errorMsg}`);
+                } else if (data.error) {
+                    throw new Error(data.error);
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+            return data;
+        });
+    })
+    .then(data => {
+        console.log('✅ Prediction successful:', data);
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('imageAnalyzeBtn').disabled = false;
+        showResults(data);
+    })
+    .catch(error => {
+        console.error('❌ Prediction error:', error);
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('imageAnalyzeBtn').disabled = false;
+        alert('Error: ' + error.message + '\n\nPlease ensure you uploaded a clear image of a cat.');
+    });
+}
+
+// Predict audio emotion
+function predictAudio() {
+    console.log('🔍 Starting audio prediction...');
+    
+    if (!selectedCatId) {
+        alert('Please select a cat first!');
+        return;
+    }
+
+    const fileInput = document.getElementById('audioFileInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an audio file!');
+        return;
+    }
+
+    console.log('📤 Sending audio prediction request...');
+    console.log('Cat ID:', selectedCatId);
+    console.log('File:', file.name, file.type, file.size);
+
+    // Show loading
+    document.getElementById('loadingDiv').style.display = 'flex';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('audioAnalyzeBtn').disabled = true;
+
+    // Create form data
+    const formData = new FormData();
+    formData.append('cat_id', selectedCatId);
+    formData.append('audio_file', file);
+
+    // Make request
+    fetch('{% url "emotion_detection:predict_audio" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => {
+        console.log('📥 Response received:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ Prediction successful:', data);
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('audioAnalyzeBtn').disabled = false;
+        showResults(data);
+    })
+    .catch(error => {
+        console.error('❌ Prediction error:', error);
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('audioAnalyzeBtn').disabled = false;
+        alert('Error: ' + error.message);
+    });
+}
+
+// Show prediction results with professional styling - ONLY main prediction
+function showResults(data) {
+    const resultsDiv = document.getElementById('predictionResults');
+    
+    if (data.success) {
+        // Store prediction ID for feedback
+        window.currentPredictionId = data.prediction_id;
+        window.currentPredictedEmotion = data.predicted_emotion;
+        
+        let html = `
+            <div class="text-center mb-4">
+                <div class="emotion-display">${data.predicted_emotion}</div>
+                <div class="confidence-display mt-2">${data.confidence}</div>
+                <div class="mt-2">
+                    <span class="badge" style="background: var(--primary-gradient); font-size: 0.85rem; padding: 0.4rem 0.9rem;">
+                        <i class="fas fa-microchip me-1"></i>${data.prediction_source || 'AI Analysis'}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Emotion Breakdown Bars -->
+            <div class="mb-4 px-2">
+                <h6 class="text-center mb-3" style="color: var(--gray-700); font-weight: 600;">
+                    <i class="fas fa-chart-bar me-2"></i>Emotion Probabilities
+                </h6>
+                <div id="emotionBreakdown">
+                    ${Object.entries(data.all_predictions || {})
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([emotion, score]) => {
+                            const pct = typeof score === 'number'
+                                ? (score > 1 ? score.toFixed(1) : (score * 100).toFixed(1))
+                                : '0.0';
+                            const barWidth = typeof score === 'number'
+                                ? Math.min(100, score > 1 ? score : score * 100).toFixed(1)
+                                : 0;
+                            const isTop = emotion === data.predicted_emotion;
+                            return `
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span style="font-size:0.88rem; font-weight:${isTop ? '700' : '400'}; color:${isTop ? 'var(--primary-color)' : 'var(--gray-700)'};">
+                                        ${isTop ? '<i class="fas fa-star me-1" style="font-size:0.75rem;"></i>' : ''}${emotion}
+                                    </span>
+                                    <span style="font-size:0.85rem; font-weight:${isTop ? '700' : '400'}; color:${isTop ? 'var(--primary-color)' : 'var(--gray-600)'};">${pct}%</span>
+                                </div>
+                                <div style="background: var(--gray-200); border-radius: 50px; height: 8px; overflow: hidden;">
+                                    <div style="width:${barWidth}%; height:100%; border-radius:50px; background:${isTop ? 'var(--primary-gradient)' : 'linear-gradient(135deg,#adb5bd,#ced4da)'}; transition: width 0.6s ease;"></div>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                </div>
+            </div>
+
+            <!-- Feedback Section -->
+            <div class="feedback-section mt-4 p-4" style="background: rgba(102, 126, 234, 0.05); border-radius: var(--radius-lg);">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-users me-2"></i>
+                    <strong>Community Learning:</strong> Your feedback helps improve the AI for all users globally!
+                </div>
+                <h6 class="text-center mb-3"><i class="fas fa-thumbs-up me-2"></i>Was this prediction correct?</h6>
+                <div class="text-center mb-3">
+                    <button class="btn btn-success me-2" onclick="submitFeedback(true)">
+                        <i class="fas fa-check me-2"></i>Yes, Correct
+                    </button>
+                    <button class="btn btn-warning" onclick="showEmotionSelector()">
+                        <i class="fas fa-times me-2"></i>No, Wrong Emotion
+                    </button>
+                </div>
+                
+                <!-- Emotion Selector (hidden by default) -->
+                <div id="emotionSelector" style="display: none;" class="mt-3">
+                    <p class="text-center mb-2"><strong>Select the correct emotion:</strong></p>
+                    <div class="d-flex flex-wrap justify-content-center gap-2" id="emotionButtons">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Feedback Status -->
+                <div id="feedbackStatus" class="mt-3" style="display: none;"></div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-primary btn-lg me-2" onclick="resetDetection()">
+                    <i class="fas fa-redo me-2"></i>Analyze Another
+                </button>
+                <a href="{% url 'emotion_detection:history' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-history me-2"></i>View History
+                </a>
+            </div>
+        `;
+        resultsDiv.innerHTML = html;
+    } else {
+        // Handle AI validation errors with helpful messages
+        let errorHtml = `
+            <div class="alert alert-danger text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                <h4>Analysis Failed</h4>
+        `;
+        
+        if (data.error === 'AI Content Validation Failed') {
+            errorHtml += `
+                <p><strong>AI detected that this image may not contain a cat.</strong></p>
+                <div class="text-start mt-3">
+                    <h6>Issues found:</h6>
+                    <ul>
+                        ${data.validation_errors.map(error => `<li>${error}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            if (data.suggestions) {
+                errorHtml += `
+                    <div class="text-start mt-3">
+                        <h6>Suggestions:</h6>
+                        <ul>
+                            ${data.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+        } else if (data.error === 'AI Content Validation Warning') {
+            errorHtml += `
+                <p><strong>Warning: This audio may not contain cat sounds.</strong></p>
+                <div class="text-start mt-3">
+                    <h6>Warnings:</h6>
+                    <ul>
+                        ${data.validation_errors.map(error => `<li>${error}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            if (data.suggestions) {
+                errorHtml += `
+                    <div class="text-start mt-3">
+                        <h6>Suggestions:</h6>
+                        <ul>
+                            ${data.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            if (data.allow_proceed) {
+                errorHtml += `
+                    <div class="mt-4">
+                        <button class="btn btn-warning me-2" onclick="proceedWithWarning()">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Proceed Anyway
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="resetDetection()">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                    </div>
+                `;
+            }
+        } else {
+            errorHtml += `<p>Error: ${data.error || 'Unknown error occurred'}</p>`;
+        }
+        
+        if (!data.allow_proceed) {
+            errorHtml += `
+                <button class="btn btn-outline-danger mt-3" onclick="resetDetection()">
+                    <i class="fas fa-redo me-2"></i>Try Again
+                </button>
+            `;
+        }
+        
+        errorHtml += `</div>`;
+        resultsDiv.innerHTML = errorHtml;
+    }
+    
+    document.getElementById('resultsSection').style.display = 'block';
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Function to proceed with warning (for audio validation)
+function proceedWithWarning() {
+    // This would bypass AI validation and proceed with prediction
+    // For now, just show a message
+    showNotification('Feature not implemented yet. Please upload a proper cat audio file.', 'warning');
+    resetDetection();
+}
+
+// Reset detection interface
+function resetDetection() {
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('imageUploadSection').style.display = 'none';
+    document.getElementById('audioUploadSection').style.display = 'none';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('audioPreview').style.display = 'none';
+    
+    // Reset file inputs
+    document.getElementById('imageFileInput').value = '';
+    document.getElementById('audioFileInput').value = '';
+    
+    // Reset buttons
+    document.getElementById('imageAnalyzeBtn').disabled = true;
+    document.getElementById('audioAnalyzeBtn').disabled = true;
+    
+    // Show success message
+    showNotification('Ready for new analysis!', 'success');
+}
+
+// Get CSRF cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Professional notification function
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 350px; max-width: 400px; border-radius: 16px;';
+    notification.innerHTML = `
+        <i class="fas fa-info-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 4000);
+}
+
+// Emotion lists for feedback
+const IMAGE_EMOTIONS = ['Angry', 'Disgusted', 'Happy', 'Normal', 'Sad', 'Scared', 'Surprised'];
+const AUDIO_EMOTIONS = ['Angry', 'Defence', 'Fighting', 'Happy', 'HuntingMind', 'Mating', 'MotherCall', 'Paining', 'Resting', 'Warning'];
+
+// Show emotion selector for correction
+function showEmotionSelector() {
+    const selector = document.getElementById('emotionSelector');
+    const buttonsDiv = document.getElementById('emotionButtons');
+    
+    // Determine which emotion list to use based on current detection type
+    const emotions = currentDetectionType === 'image' ? IMAGE_EMOTIONS : AUDIO_EMOTIONS;
+    
+    // Create emotion buttons
+    let buttonsHtml = '';
+    emotions.forEach(emotion => {
+        if (emotion !== window.currentPredictedEmotion) {
+            buttonsHtml += `
+                <button class="btn btn-outline-primary" onclick="submitFeedback(false, '${emotion}')">
+                    ${emotion}
+                </button>
+            `;
+        }
+    });
+    
+    buttonsDiv.innerHTML = buttonsHtml;
+    selector.style.display = 'block';
+}
+
+// Submit feedback to learning system
+function submitFeedback(isCorrect, correctEmotion = null) {
+    const predictionId = window.currentPredictionId;
+    const emotion = isCorrect ? window.currentPredictedEmotion : correctEmotion;
+    
+    if (!predictionId) {
+        showNotification('Error: No prediction ID found', 'danger');
+        return;
+    }
+    
+    if (!emotion) {
+        showNotification('Error: No emotion specified', 'danger');
+        return;
+    }
+    
+    // Show loading status
+    const statusDiv = document.getElementById('feedbackStatus');
+    statusDiv.innerHTML = `
+        <div class="alert alert-info text-center">
+            <i class="fas fa-spinner fa-spin me-2"></i>Processing your feedback...
+        </div>
+    `;
+    statusDiv.style.display = 'block';
+    
+    // Send feedback to server
+    fetch('{% url "emotion_detection:submit_feedback" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            prediction_id: predictionId,
+            correct_emotion: emotion
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-success text-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Thank you!</strong> ${data.message}
+                    <br><small>🌍 Your feedback has been added to the global learning database. All users will benefit from this improvement!</small>
+                </div>
+            `;
+            
+            // Hide feedback buttons
+            document.querySelector('.feedback-section h6').style.display = 'none';
+            document.querySelector('.feedback-section .text-center.mb-3').style.display = 'none';
+            document.getElementById('emotionSelector').style.display = 'none';
+            
+            showNotification('🌍 Global AI learning updated! Thank you for helping the community!', 'success');
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger text-center">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error: ${data.error}
+                </div>
+            `;
+            showNotification('Failed to submit feedback', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Feedback error:', error);
+        statusDiv.innerHTML = `
+            <div class="alert alert-danger text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error submitting feedback. Please try again.
+            </div>
+        `;
+        showNotification('Network error. Please try again.', 'danger');
+    });
+}
+
+// Load and display learning statistics
+function loadLearningStats() {
+    const statsDiv = document.getElementById('learningStats');
+    
+    statsDiv.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+            <p>Loading learning statistics...</p>
+        </div>
+    `;
+    
+    fetch('{% url "emotion_detection:get_learned_patterns" %}', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = `
+                <div class="alert alert-success mb-3">
+                    <i class="fas fa-globe me-2"></i>
+                    <strong>Global Community Learning Data</strong> - Contributions from all users worldwide
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-center" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                            <div class="card-body">
+                                <h3 class="text-primary">${data.total_feedback}</h3>
+                                <p class="mb-0">Total Community Feedback</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                            <div class="card-body">
+                                <h3 class="text-success">${data.correct_predictions}</h3>
+                                <p class="mb-0">Correct Predictions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                            <div class="card-body">
+                                <h3 class="text-info">${data.accuracy}%</h3>
+                                <p class="mb-0">Global Accuracy</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (data.patterns.length > 0) {
+                html += `
+                    <h6 class="mb-3"><i class="fas fa-database me-2"></i>Global Learned Patterns (Shared by All Users)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Emotion</th>
+                                    <th>Type</th>
+                                    <th>Community Samples</th>
+                                    <th>Confidence Boost</th>
+                                    <th>Last Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                data.patterns.forEach(pattern => {
+                    const date = new Date(pattern.updated);
+                    html += `
+                        <tr>
+                            <td><strong>${pattern.emotion}</strong></td>
+                            <td><span class="badge bg-primary">${pattern.type}</span></td>
+                            <td><i class="fas fa-users me-1"></i>${pattern.samples} users contributed</td>
+                            <td>+${pattern.confidence_boost.toFixed(1)}%</td>
+                            <td>${date.toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No learned patterns yet. Be the first to contribute feedback and help the global AI learn!
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-secondary" onclick="document.getElementById('learningStats').innerHTML = '<button class=\'btn btn-outline-primary\' onclick=\'loadLearningStats()\'><i class=\'fas fa-chart-line me-2\'></i>View Global Learning Statistics</button>'">
+                        <i class="fas fa-times me-2"></i>Hide Statistics
+                    </button>
+                </div>
+            `;
+            
+            statsDiv.innerHTML = html;
+        } else {
+            statsDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading statistics: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Stats error:', error);
+        statsDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error loading statistics. Please try again.
+            </div>
+        `;
+    });
+}
+
+</script>
+{% endblock %}

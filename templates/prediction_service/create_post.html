@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Post - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-post-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95));
+        backdrop-filter: blur(10px);
+        border-radius: 25px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+
+    .upload-area {
+        border: 3px dashed #ddd;
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background: linear-gradient(135deg, rgba(255,107,107,0.05), rgba(78,205,196,0.05));
+        transform: scale(1.02);
+    }
+
+    .upload-area.dragover {
+        border-color: var(--secondary-color);
+        background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(255,107,107,0.1));
+        transform: scale(1.05);
+    }
+
+    .upload-icon {
+        font-size: 4rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .image-preview {
+        max-width: 100%;
+        max-height: 400px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        margin-bottom: 2rem;
+    }
+
+    .cat-selector {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .cat-option {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 0.5rem;
+        border: 2px solid transparent;
+    }
+
+    .cat-option:hover {
+        background: linear-gradient(135deg, rgba(255,107,107,0.1), rgba(78,205,196,0.1));
+        transform: translateX(10px);
+    }
+
+    .cat-option.selected {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .cat-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+        border: 3px solid white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .form-control, .form-select {
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(255,107,107,0.25);
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        /* Use standardized button sizing */
+        padding: 0.75rem 2rem;
+        font-size: 0.875rem;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .emotion-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .emotion-tag {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center mb-4">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-camera text-primary"></i>
+                Create New Post
+            </h1>
+            <p class="lead">Share your cat's amazing moments with the community</p>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="create-post-card">
+            <form id="createPostForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Cat Selection -->
+                {% if user_cats %}
+                <div class="cat-selector">
+                    <h5 class="mb-3"><i class="fas fa-paw"></i> Select Your Cat</h5>
+                    <div class="row">
+                        {% for cat in user_cats %}
+                        <div class="col-md-6">
+                            <div class="cat-option" data-cat-id="{{ cat.id }}" onclick="selectCat({{ cat.id }}, '{{ cat.name }}')">
+                                {% if cat.photo %}
+                                    <img src="{{ cat.photo.url }}" alt="{{ cat.name }}" class="cat-avatar">
+                                {% else %}
+                                    <div class="cat-avatar bg-primary d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-cat text-white"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-1">{{ cat.name }}</h6>
+                                    <small class="text-muted">{{ cat.breed|default:"Mixed Breed" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle"></i> No Cats Registered</h5>
+                    <p>You need to register at least one cat before creating posts.</p>
+                    <a href="{% url 'cat_profiles:add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Your First Cat
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if user_cats %}
+                <!-- Image Upload -->
+                <div class="upload-area" id="imageUploadArea" onclick="triggerImageUpload()">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h5>Click to upload or drag and drop</h5>
+                    <p class="text-muted">Supports JPG, PNG files (Max 10MB)</p>
+                    <input type="file" id="imageFile" name="image" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                </div>
+                
+                <!-- Alternative Browse Button -->
+                <div class="text-center mb-3">
+                    <button type="button" class="btn btn-outline-primary" onclick="triggerImageUpload()">
+                        <i class="fas fa-folder-open"></i> Browse Images
+                    </button>
+                    <small class="text-muted d-block mt-1">Click here if the upload area doesn't work</small>
+                </div>
+
+                <!-- Image Preview -->
+                <div id="imagePreview" class="text-center" style="display: none;">
+                    <img id="previewImg" src="" alt="Preview" class="image-preview">
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary" onclick="changeImage()">
+                            <i class="fas fa-edit"></i> Change Image
+                        </button>
+                    </div>
+                    <div id="detectedEmotions" class="emotion-tags"></div>
+                </div>
+
+                <!-- Caption -->
+                <div class="mb-3">
+                    <label for="caption" class="form-label">
+                        <i class="fas fa-pen"></i> Caption
+                    </label>
+                    <textarea class="form-control" id="caption" name="caption" rows="3" 
+                              placeholder="Write a caption for your post..."></textarea>
+                </div>
+
+                <!-- Location -->
+                <div class="mb-3">
+                    <label for="location" class="form-label">
+                        <i class="fas fa-map-marker-alt"></i> Location (Optional)
+                    </label>
+                    <input type="text" class="form-control" id="location" name="location" 
+                           placeholder="Add location...">
+                </div>
+
+                <!-- Privacy Settings -->
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isPublic" name="is_public" checked>
+                        <label class="form-check-label" for="isPublic">
+                            <i class="fas fa-globe"></i> Make this post public
+                        </label>
+                        <small class="form-text text-muted d-block">
+                            Public posts can be seen by all community members
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-create btn-lg" id="submitBtn" disabled>
+                        <i class="fas fa-share"></i> Share Post
+                    </button>
+                    <a href="{% url 'prediction_service:community_feed' %}" class="btn btn-outline-secondary btn-lg ms-3">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h4>Creating your post...</h4>
+        <p>Analyzing emotions and uploading...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedCatId = null;
+let selectedCatName = '';
+
+// Debug logging
+console.log('🚀 Community post creation page loaded');
+
+function selectCat(catId, catName) {
+    console.log('🐱 Selecting cat:', catName, 'ID:', catId);
+    selectedCatId = catId;
+    selectedCatName = catName;
+    
+    // Update UI
+    document.querySelectorAll('.cat-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    const selectedOption = document.querySelector(`[data-cat-id="${catId}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('selected');
+        console.log('✅ Cat selection UI updated');
+    }
+    
+    // Show feedback
+    showMessage(`Selected ${catName} for the post`, 'success');
+    
+    // Enable form if image is also selected
+    checkFormReady();
+}
+
+function showMessage(message, type = 'info') {
+    // Create a temporary message element
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    messageDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    messageDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+    }, 3000);
+}
+
+function triggerImageUpload() {
+    console.log('🖼️ Triggering image upload...');
+    const fileInput = document.getElementById('imageFile');
+    
+    if (fileInput) {
+        console.log('✅ File input found, triggering click');
+        try {
+            fileInput.click();
+        } catch (error) {
+            console.error('❌ Error clicking file input:', error);
+            // Alternative method
+            const event = new MouseEvent('click', {
+                view: window,
+                bubbles: true,
+                cancelable: true
+            });
+            fileInput.dispatchEvent(event);
+        }
+    } else {
+        console.error('❌ File input not found');
+    }
+}
+
+function handleImageUpload(input) {
+    console.log('📁 Handling image upload...');
+    
+    if (!selectedCatId) {
+        alert('Please select a cat first!');
+        input.value = ''; // Clear the input
+        return;
+    }
+    
+    const file = input.files[0];
+    console.log('File selected:', file ? file.name : 'none');
+    
+    if (file) {
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file (JPG, PNG, etc.)!');
+            input.value = '';
+            return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size must be less than 10MB!');
+            input.value = '';
+            return;
+        }
+        
+        console.log('✅ File validation passed');
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            console.log('📸 Showing image preview');
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+            
+            // Hide upload area
+            document.getElementById('imageUploadArea').style.display = 'none';
+            
+            // Auto-detect emotions (simulate)
+            setTimeout(() => {
+                const emotions = ['Happy', 'Playful', 'Curious'];
+                const emotionsDiv = document.getElementById('detectedEmotions');
+                emotionsDiv.innerHTML = '<p class="text-muted mb-2">Detected emotions:</p>' + 
+                    emotions.map(emotion => 
+                        `<span class="emotion-tag">${emotion}</span>`
+                    ).join('');
+            }, 1000);
+        };
+        reader.readAsDataURL(file);
+        
+        checkFormReady();
+    }
+}
+
+function checkFormReady() {
+    const submitBtn = document.getElementById('submitBtn');
+    const imageFile = document.getElementById('imageFile').files[0];
+    
+    if (selectedCatId && imageFile) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-share"></i> Share Post';
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-share"></i> Share Post (Select cat & image)';
+    }
+}
+
+function changeImage() {
+    console.log('🔄 Changing image...');
+    // Clear current selection
+    document.getElementById('imageFile').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('imageUploadArea').style.display = 'block';
+    
+    // Trigger new upload
+    triggerImageUpload();
+    
+    checkFormReady();
+}
+
+// Form submission
+document.getElementById('createPostForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!selectedCatId) {
+        alert('Please select a cat!');
+        return;
+    }
+    
+    const imageFile = document.getElementById('imageFile').files[0];
+    if (!imageFile) {
+        alert('Please select an image!');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('cat_id', selectedCatId);
+    formData.append('image', imageFile);
+    formData.append('caption', document.getElementById('caption').value);
+    formData.append('location', document.getElementById('location').value);
+    formData.append('is_public', document.getElementById('isPublic').checked);
+    
+    // Show loading
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    fetch('{% url "prediction_service:create_post" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        if (data.success) {
+            alert('Post created successfully!');
+            window.location.href = '{% url "prediction_service:community_feed" %}';
+        } else {
+            alert('Error creating post: ' + data.error);
+        }
+    })
+    .catch(error => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        console.error('Error:', error);
+        alert('Network error occurred');
+    });
+});
+
+// Drag and drop functionality
+const uploadArea = document.getElementById('imageUploadArea');
+if (uploadArea) {
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const input = document.getElementById('imageFile');
+            input.files = files;
+            handleImageUpload(input);
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

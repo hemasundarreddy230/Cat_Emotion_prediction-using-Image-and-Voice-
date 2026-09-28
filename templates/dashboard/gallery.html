@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}Photo Gallery - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gallery-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+    }
+
+    .gallery-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .gallery-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+    }
+
+    .gallery-content {
+        padding: 1.5rem;
+    }
+
+    .cat-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+        border: 2px solid var(--primary-color);
+    }
+
+    .filter-bar {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .upload-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+
+    .upload-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    }
+
+    .emotion-tag {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center mb-4">
+            <h1 style="color:#fff !important;">
+                <i class="fas fa-images text-primary"></i>
+                Photo Gallery
+            </h1>
+            <p style="color:#fff !important;">
+                Your cat's photo collection
+                {% if total_photos %}
+                    <span class="badge bg-primary ms-2">{{ total_photos }} photo{{ total_photos|pluralize }}</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="row">
+    <div class="col-12">
+        <div class="filter-bar">
+            <form method="get" class="row align-items-center">
+                <div class="col-md-6">
+                    <label class="form-label">Filter by Cat</label>
+                    <select name="cat" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Cats</option>
+                        {% for cat in user_cats %}
+                            <option value="{{ cat.id }}" {% if selected_cat == cat.id %}selected{% endif %}>
+                                {{ cat.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        {% if selected_cat %}
+                        <a href="{% url 'dashboard:gallery' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear Filter
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'prediction_service:create_post' %}" class="btn btn-primary ms-2">
+                            <i class="fas fa-plus"></i> Add Photo
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Gallery Grid -->
+<div class="row">
+    {% for photo in photos %}
+    <div class="col-lg-4 col-md-6">
+        <div class="gallery-card">
+            {% if photo.source == 'emotion_detection' %}
+                <img src="{{ photo.image.url }}" alt="Cat photo" class="gallery-image">
+            {% else %}
+                <img src="{{ photo.image.url }}" alt="Cat photo" class="gallery-image">
+            {% endif %}
+            <div class="gallery-content">
+                <div class="d-flex align-items-center mb-2">
+                    {% if photo.cat.photo %}
+                        <img src="{{ photo.cat.photo.url }}" alt="{{ photo.cat.name }}" class="cat-avatar">
+                    {% else %}
+                        <div class="cat-avatar bg-primary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-cat text-white"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h6 class="mb-0">{{ photo.cat.name }}</h6>
+                        <small class="text-muted">{{ photo.created_at|timesince }} ago</small>
+                    </div>
+                </div>
+                
+                <!-- Source Badge -->
+                <div class="mb-2">
+                    {% if photo.source == 'gallery' %}
+                        <span class="badge bg-primary">
+                            <i class="fas fa-images"></i> Gallery
+                        </span>
+                    {% elif photo.source == 'emotion_detection' %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-brain"></i> Emotion Detection
+                        </span>
+                    {% elif photo.source == 'community_post' %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-users"></i> Community Post
+                        </span>
+                    {% endif %}
+                </div>
+                
+                {% if photo.title %}
+                    <h6 class="mt-2">{{ photo.title }}</h6>
+                {% endif %}
+                
+                {% if photo.description %}
+                    <p class="text-muted">{{ photo.description|truncatewords:15 }}</p>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <small class="text-muted">
+                        {% if photo.is_favorite %}
+                            <i class="fas fa-heart text-danger"></i> Favorite
+                        {% endif %}
+                    </small>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewPhoto('{{ photo.id }}', '{{ photo.image.url }}', '{{ photo.title }}', '{{ photo.description }}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-images" style="font-size: 4rem; color: var(--primary-color); margin-bottom: 2rem;"></i>
+            <h4>No Photos Yet</h4>
+            <p class="text-muted mb-4">Start building your cat's photo gallery!</p>
+            <a href="{% url 'prediction_service:create_post' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Add First Photo
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Upload Button -->
+<button class="upload-btn" onclick="location.href='{% url 'prediction_service:create_post' %}'">
+    <i class="fas fa-plus"></i>
+</button>
+
+<!-- Photo Modal -->
+<div class="modal fade" id="photoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Photo Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="" alt="Photo" class="img-fluid rounded">
+                <div id="modalContent" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewPhoto(photoId, imageUrl, title, description) {
+    // Show photo details in modal
+    document.getElementById('modalImage').src = imageUrl;
+    
+    let contentHtml = '';
+    if (title) {
+        contentHtml += `<h5>${title}</h5>`;
+    }
+    if (description) {
+        contentHtml += `<p>${description}</p>`;
+    }
+    if (!title && !description) {
+        contentHtml = '<p class="text-muted">No additional details available.</p>';
+    }
+    
+    document.getElementById('modalContent').innerHTML = contentHtml;
+    new bootstrap.Modal(document.getElementById('photoModal')).show();
+}
+
+function deletePhoto(photoId) {
+    if (confirm('Are you sure you want to delete this photo?')) {
+        // This would delete the photo
+        console.log('Delete photo:', photoId);
+        alert('Photo deletion functionality would be implemented here.');
+    }
+}
+</script>
+{% endblock %}

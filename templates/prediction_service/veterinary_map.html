@@ -1,0 +1,765 @@
+{% extends 'base.html' %}
+
+{% block title %}Veterinary Services Map - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .map-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .map-placeholder {
+        height: 500px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .service-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .service-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .service-header {
+        display: flex;
+        justify-content: between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .service-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .service-rating {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .star {
+        color: #ffc107;
+        margin-right: 0.2rem;
+    }
+
+    .service-badge {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        display: inline-block;
+    }
+
+    .emergency-badge {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .filter-bar {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .service-services {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .service-tag {
+        background: #f8f9fa;
+        color: #6c757d;
+        padding: 0.25rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+    }
+
+    .contact-info {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        color: #6c757d;
+    }
+
+    .contact-item i {
+        width: 20px;
+        margin-right: 0.5rem;
+        color: var(--primary-color);
+    }
+
+    .review-section {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .add-review-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .add-review-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .distance-display {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .service-item {
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center mb-4">
+         <h1  style="color:#fff !important;">
+    <i class="fas fa-map-marked-alt" style="color:#fff !important;"></i>
+    Veterinary Services
+</h1>
+
+
+            <p style="color:#fff !important;" >Find trusted veterinary services near you</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="row">
+    <div class="col-12">
+        <div class="filter-bar">
+            <form method="get" class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label">Service Type</label>
+                    <select name="service_type" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Services</option>
+                        <option value="General Care" {% if service_type == 'General Care' %}selected{% endif %}>General Care</option>
+                        <option value="Emergency" {% if service_type == 'Emergency' %}selected{% endif %}>Emergency</option>
+                        <option value="Surgery" {% if service_type == 'Surgery' %}selected{% endif %}>Surgery</option>
+                        <option value="Dental" {% if service_type == 'Dental' %}selected{% endif %}>Dental</option>
+                        <option value="Vaccination" {% if service_type == 'Vaccination' %}selected{% endif %}>Vaccination</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Emergency Only</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="emergency" value="true" 
+                               {% if emergency_only %}checked{% endif %} onchange="this.form.submit()">
+                        <label class="form-check-label">Show emergency services only</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Find Near Me</label>
+                    <button type="button" class="btn btn-primary w-100" onclick="findNearMe()">
+                        <i class="fas fa-location-arrow me-2"></i>Use My Location
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        {% if service_type or emergency_only %}
+                        <a href="{% url 'prediction_service:veterinary_map' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Map -->
+<div class="row">
+    <div class="col-12">
+        <div class="map-container">
+            <div id="map" style="height: 500px; border-radius: 15px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Services List -->
+<div class="row">
+    <div class="col-12">
+        <h4 class="mb-4" id="servicesHeader">
+            <i class="fas fa-list text-primary"></i>
+            Available Services (<span id="servicesCount">{{ services.count }}</span>)
+        </h4>
+    </div>
+</div>
+
+<div class="row" id="servicesList">
+    {% for service in services %}
+    <div class="col-lg-6 service-item" data-service-id="{{ service.id }}" data-lat="{{ service.latitude }}" data-lng="{{ service.longitude }}">
+        <div class="service-card" onclick="showServiceDetails({{ service.id }})">
+            <div class="service-header">
+                <div class="flex-grow-1">
+                    <div class="service-name">{{ service.name }}</div>
+                    <div class="service-rating">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= service.rating %}
+                                <i class="fas fa-star star"></i>
+                            {% else %}
+                                <i class="far fa-star star"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ms-2 text-muted">{{ service.rating|floatformat:1 }} ({{ service.reviews_count }} reviews)</span>
+                    </div>
+                </div>
+                {% if service.is_emergency %}
+                    <span class="service-badge emergency-badge">
+                        <i class="fas fa-ambulance"></i> Emergency
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{{ service.address }}</span>
+                </div>
+                <div class="contact-item distance-display" id="distance-{{ service.id }}" style="display: none;">
+                    <i class="fas fa-route"></i>
+                    <span class="distance-text" style="font-weight: 600; color: var(--primary-color);"></span>
+                </div>
+                {% if service.phone %}
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ service.phone }}</span>
+                </div>
+                {% endif %}
+                {% if service.email %}
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>{{ service.email }}</span>
+                </div>
+                {% endif %}
+                {% if service.website %}
+                <div class="contact-item">
+                    <i class="fas fa-globe"></i>
+                    <a href="{{ service.website }}" target="_blank">Visit Website</a>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if service.services %}
+            <div class="service-services">
+                {% for service_type in service.services %}
+                    <span class="service-tag">{{ service_type }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if service.opening_hours %}
+            <div class="contact-info mt-3">
+                <div class="contact-item">
+                    <i class="fas fa-clock"></i>
+                    <span><strong>Hours:</strong> 
+                        {% if service.opening_hours.monday == '24 Hours' %}
+                            Open 24/7
+                        {% else %}
+                            {{ service.opening_hours.monday }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="review-section">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">{{ service.reviews_count }} reviews</small>
+                    <button class="add-review-btn" onclick="event.stopPropagation(); showReviewModal({{ service.id }}, '{{ service.name }}')">
+                        <i class="fas fa-star"></i> Add Review
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12" id="noServicesMessage">
+        <div class="text-center py-5">
+            <i class="fas fa-search" style="font-size: 4rem; color: var(--primary-color); margin-bottom: 2rem;"></i>
+            <h4>No Services Found</h4>
+            <p class="text-muted mb-4">Try adjusting your filters to find veterinary services.</p>
+            <a href="{% url 'prediction_service:veterinary_map' %}" class="btn btn-primary">
+                <i class="fas fa-refresh"></i> Clear Filters
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <input type="hidden" id="serviceId" name="service_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="rating-input">
+                            {% for i in "12345" %}
+                            <i class="fas fa-star rating-star" data-rating="{{ forloop.counter }}" 
+                               onclick="setRating({{ forloop.counter }})"></i>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="rating" name="rating" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reviewText" class="form-label">Review (Optional)</label>
+                        <textarea class="form-control" id="reviewText" name="review" rows="3" 
+                                  placeholder="Share your experience..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">Submit Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet CSS and JS for map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let selectedRating = 0;
+let map;
+let markers = [];
+let userLocation = null;
+let userMarker = null;
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMap();
+});
+
+function initializeMap() {
+    // Initialize map centered on USA
+    map = L.map('map').setView([37.0902, -95.7129], 4);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Add markers for all services
+    const services = {{ services_json|safe }};
+    
+    services.forEach(service => {
+        const marker = L.marker([service.latitude, service.longitude])
+            .addTo(map)
+            .bindPopup(`
+                <div style="min-width: 200px;">
+                    <h6 style="margin-bottom: 10px; color: var(--primary-color);">
+                        ${service.name}
+                    </h6>
+                    <p style="margin-bottom: 5px; font-size: 0.9rem;">
+                        <i class="fas fa-map-marker-alt" style="color: var(--primary-color); width: 15px;"></i>
+                        ${service.address}
+                    </p>
+                    ${service.phone ? `
+                        <p style="margin-bottom: 5px; font-size: 0.9rem;">
+                            <i class="fas fa-phone" style="color: var(--primary-color); width: 15px;"></i>
+                            ${service.phone}
+                        </p>
+                    ` : ''}
+                    <p style="margin-bottom: 5px; font-size: 0.9rem;">
+                        <i class="fas fa-star" style="color: #ffc107; width: 15px;"></i>
+                        ${service.rating} (${service.reviews_count} reviews)
+                    </p>
+                    <p id="popup-distance-${service.id}" style="margin-bottom: 5px; font-size: 0.9rem; display: none;">
+                        <i class="fas fa-route" style="color: var(--primary-color); width: 15px;"></i>
+                        <span class="popup-distance-text"></span>
+                    </p>
+                    ${service.is_emergency ? `
+                        <span style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.75rem; display: inline-block; margin-top: 5px;">
+                            <i class="fas fa-ambulance"></i> Emergency
+                        </span>
+                    ` : ''}
+                    <div style="margin-top: 10px;">
+                        <button onclick="showServiceDetails(${service.id})" style="background: var(--primary-color); color: white; border: none; padding: 5px 15px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `);
+        
+        // Store service data with marker
+        marker.serviceData = service;
+        markers.push(marker);
+    });
+    
+    // If there are services, fit map to show all markers
+    if (services.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+}
+
+// Calculate distance between two coordinates (Haversine formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    return distance;
+}
+
+// Format distance for display
+function formatDistance(miles) {
+    if (miles < 1) {
+        return `${(miles * 5280).toFixed(0)} feet away`;
+    } else {
+        return `${miles.toFixed(1)} miles away`;
+    }
+}
+
+// Find clinics near user's location
+function findNearMe() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser');
+        return;
+    }
+    
+    // Show loading state
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Getting location...';
+    btn.disabled = true;
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            userLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            
+            console.log('User location:', userLocation);
+            
+            // Remove existing user marker if any
+            if (userMarker) {
+                map.removeLayer(userMarker);
+            }
+            
+            // Add user location marker (blue marker)
+            const userIcon = L.divIcon({
+                className: 'user-location-marker',
+                html: '<div style="background: #4285F4; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            
+            userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
+                .addTo(map)
+                .bindPopup('<strong>Your Location</strong>')
+                .openPopup();
+            
+            // Calculate distances and sort markers
+            const servicesWithDistance = markers.map(marker => {
+                const service = marker.serviceData;
+                const distance = calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    service.latitude,
+                    service.longitude
+                );
+                return { marker, service, distance };
+            });
+            
+            // Sort by distance
+            servicesWithDistance.sort((a, b) => a.distance - b.distance);
+            
+            // Update distance displays and reorder service cards
+            const servicesList = document.getElementById('servicesList');
+            const serviceItems = [];
+            
+            servicesWithDistance.forEach(({ service, distance }, index) => {
+                const distanceText = formatDistance(distance);
+                
+                // Update card distance
+                const distanceElement = document.getElementById(`distance-${service.id}`);
+                if (distanceElement) {
+                    distanceElement.style.display = 'flex';
+                    distanceElement.querySelector('.distance-text').textContent = distanceText;
+                }
+                
+                // Update popup distance
+                const popupElement = document.getElementById(`popup-distance-${service.id}`);
+                if (popupElement) {
+                    popupElement.style.display = 'block';
+                    popupElement.querySelector('.popup-distance-text').textContent = distanceText;
+                }
+                
+                // Find and store the service card element
+                const serviceCard = document.querySelector(`.service-item[data-service-id="${service.id}"]`);
+                if (serviceCard) {
+                    // Add distance data attribute for sorting
+                    serviceCard.dataset.distance = distance;
+                    serviceItems.push({ element: serviceCard, distance, index });
+                }
+            });
+            
+            // Reorder service cards by distance
+            serviceItems.forEach(({ element }) => {
+                servicesList.appendChild(element);
+            });
+            
+            // Update header to show sorted by distance
+            const servicesHeader = document.getElementById('servicesHeader');
+            servicesHeader.innerHTML = `
+                <i class="fas fa-location-arrow text-primary"></i>
+                Nearest Services (<span id="servicesCount">${servicesWithDistance.length}</span>)
+                <small class="text-muted ms-2" style="font-size: 0.9rem;">Sorted by distance</small>
+            `;
+            
+            // Highlight the 3 nearest clinics
+            serviceItems.slice(0, 3).forEach(({ element }, idx) => {
+                const badge = document.createElement('span');
+                badge.className = 'service-badge';
+                badge.style.background = 'linear-gradient(135deg, #43e97b, #38f9d7)';
+                badge.innerHTML = `<i class="fas fa-medal"></i> #${idx + 1} Nearest`;
+                
+                const header = element.querySelector('.service-header');
+                if (header && !header.querySelector('.service-badge:not(.emergency-badge)')) {
+                    header.appendChild(badge);
+                }
+            });
+            
+            // Zoom to show user location and nearest clinics
+            const nearestMarkers = servicesWithDistance.slice(0, 5).map(s => s.marker);
+            nearestMarkers.push(userMarker);
+            const group = L.featureGroup(nearestMarkers);
+            map.fitBounds(group.getBounds().pad(0.2));
+            
+            // Restore button
+            btn.innerHTML = '<i class="fas fa-check me-2"></i>Location Found!';
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }, 2000);
+            
+            // Show success message with nearest clinic info
+            const nearestClinic = servicesWithDistance[0];
+            showNotification(
+                `Found ${servicesWithDistance.length} clinics. Nearest: ${nearestClinic.service.name} (${formatDistance(nearestClinic.distance)})`,
+                'success'
+            );
+        },
+        function(error) {
+            console.error('Geolocation error:', error);
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            
+            let errorMessage = 'Unable to get your location. ';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage += 'Please allow location access in your browser settings.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage += 'Location information is unavailable.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage += 'Location request timed out.';
+                    break;
+                default:
+                    errorMessage += 'An unknown error occurred.';
+            }
+            alert(errorMessage);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 350px; max-width: 400px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function showServiceDetails(serviceId) {
+    // This would show detailed service information
+    console.log('Show details for service:', serviceId);
+}
+
+function showReviewModal(serviceId, serviceName) {
+    document.getElementById('serviceId').value = serviceId;
+    document.querySelector('#reviewModal .modal-title').textContent = `Add Review for ${serviceName}`;
+    
+    // Reset rating
+    selectedRating = 0;
+    document.getElementById('rating').value = '';
+    document.querySelectorAll('.rating-star').forEach(star => {
+        star.classList.remove('selected');
+    });
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('reviewModal')).show();
+}
+
+function setRating(rating) {
+    selectedRating = rating;
+    document.getElementById('rating').value = rating;
+    
+    // Update star display
+    document.querySelectorAll('.rating-star').forEach((star, index) => {
+        if (index < rating) {
+            star.classList.add('selected');
+            star.style.color = '#ffc107';
+        } else {
+            star.classList.remove('selected');
+            star.style.color = '#dee2e6';
+        }
+    });
+}
+
+function submitReview() {
+    if (selectedRating === 0) {
+        alert('Please select a rating!');
+        return;
+    }
+    
+    const formData = {
+        service_id: document.getElementById('serviceId').value,
+        rating: selectedRating,
+        review: document.getElementById('reviewText').value
+    };
+    
+    fetch('{% url "prediction_service:add_service_review" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Review added successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+            location.reload(); // Refresh to show updated rating
+        } else {
+            alert('Error adding review: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error occurred');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize rating stars
+document.querySelectorAll('.rating-star').forEach(star => {
+    star.style.cursor = 'pointer';
+    star.style.fontSize = '1.5rem';
+    star.style.marginRight = '0.2rem';
+    star.style.color = '#dee2e6';
+    star.style.transition = 'color 0.3s ease';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,798 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ group.name }} - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .group-header {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.9), rgba(240, 147, 251, 0.9));
+        border-radius: 24px;
+        padding: 3rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .group-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        transform: rotate(45deg);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .group-cover {
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .group-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 20px;
+    }
+
+    .group-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    /* AGGRESSIVE FIX FOR BUTTON OVERLAP - HIGHEST PRIORITY */
+    /* Override base template button styles */
+    .group-actions {
+        position: relative !important;
+        z-index: 1 !important;
+        margin-top: 2rem !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        justify-content: flex-end !important;
+        width: 100% !important;
+        min-height: 50px !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+    }
+
+    .group-actions .join-btn,
+    .group-actions .btn,
+    .group-actions button,
+    .group-actions a {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 25px !important;
+        padding: 0.6rem 1rem !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        min-width: 100px !important;
+        max-width: 120px !important;
+        text-align: center !important;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+        font-size: 0.85rem !important;
+        line-height: 1.2 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        position: relative !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
+        min-height: auto !important;
+    }
+
+    .group-actions .join-btn:hover,
+    .group-actions .btn:hover,
+    .group-actions button:hover,
+    .group-actions a:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        transform: translateY(-2px) !important;
+    }
+
+    .group-actions .join-btn.joined,
+    .group-actions .btn.joined,
+    .group-actions button.joined {
+        background: rgba(40, 167, 69, 0.8) !important;
+        border-color: rgba(40, 167, 69, 0.8) !important;
+    }
+
+    /* Responsive design for buttons - AGGRESSIVE OVERRIDE */
+    @media (max-width: 768px) {
+        .group-actions {
+            justify-content: center !important;
+            margin-top: 1.5rem !important;
+            gap: 0.5rem !important;
+        }
+        
+        .group-actions .join-btn,
+        .group-actions .btn,
+        .group-actions button,
+        .group-actions a {
+            padding: 0.5rem 0.8rem !important;
+            font-size: 0.8rem !important;
+            min-width: 85px !important;
+            max-width: 100px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .group-actions {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+        }
+        
+        .group-actions .join-btn,
+        .group-actions .btn,
+        .group-actions button,
+        .group-actions a {
+            width: 70% !important;
+            max-width: 150px !important;
+            min-width: 120px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .group-actions {
+            margin-top: 1rem !important;
+        }
+        
+        .group-actions .join-btn,
+        .group-actions .btn,
+        .group-actions button,
+        .group-actions a {
+            width: 80% !important;
+            padding: 0.5rem 0.8rem !important;
+            font-size: 0.75rem !important;
+        }
+    }
+
+    .content-tabs {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .nav-tabs {
+        border: none;
+        margin-bottom: 2rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        margin-right: 0.5rem;
+        color: var(--gray-600);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .nav-tabs .nav-link.active {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .nav-tabs .nav-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+    }
+
+    .post-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .post-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        margin-right: 1rem;
+    }
+
+    .post-image {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin: 1rem 0;
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .action-btn {
+        background: none;
+        border: none;
+        color: var(--gray-600);
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .action-btn:hover {
+        color: var(--primary-color);
+    }
+
+    .action-btn.liked {
+        color: var(--danger-color);
+    }
+
+    .members-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .member-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .member-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .member-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+    }
+
+    .role-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .role-admin {
+        background: var(--danger-gradient);
+        color: white;
+    }
+
+    .role-moderator {
+        background: var(--warning-gradient);
+        color: white;
+    }
+
+    .role-member {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .chat-preview {
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .chat-message {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+    }
+
+    .message-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        margin-right: 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-500);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 2rem;
+        opacity: 0.5;
+    }
+
+    @keyframes shimmer {
+        0%, 100% { transform: rotate(45deg) translateX(-100%); }
+        50% { transform: rotate(45deg) translateX(100%); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Group Header -->
+<div class="group-header">
+    <div class="row align-items-center">
+        <div class="col-lg-7 col-md-6">
+            <div class="group-cover">
+                {% if group.cover_image %}
+                    <img src="{{ group.cover_image.url }}" alt="{{ group.name }}">
+                {% else %}
+                    <i class="fas fa-users"></i>
+                {% endif %}
+            </div>
+            <h1 class="display-5 fw-bold mb-2">{{ group.name }}</h1>
+            <p class="lead mb-0">{{ group.description }}</p>
+            <div class="group-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ members_count }}</span>
+                    <span class="stat-label">Members</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ posts_count }}</span>
+                    <span class="stat-label">Posts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ group.created_at|timesince|truncatewords:1 }}</span>
+                    <span class="stat-label">Created</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5 col-md-6">
+            <div class="group-actions" style="display: flex !important; flex-wrap: wrap !important; gap: 0.5rem !important; justify-content: flex-end !important; margin-top: 2rem !important;">
+                {% if is_member %}
+                    <button class="join-btn joined" onclick="leaveGroup({{ group.id }})" style="min-width: 100px !important; max-width: 120px !important; padding: 0.6rem 1rem !important; font-size: 0.85rem !important; margin: 0 !important; flex-shrink: 0 !important; white-space: nowrap !important;">
+                        <i class="fas fa-check me-1"></i>Joined
+                    </button>
+                    <a href="{% url 'prediction_service:group_chat' group.id %}" class="join-btn" style="min-width: 100px !important; max-width: 120px !important; padding: 0.6rem 1rem !important; font-size: 0.85rem !important; margin: 0 !important; flex-shrink: 0 !important; white-space: nowrap !important; text-decoration: none !important;">
+                        <i class="fas fa-comments me-1"></i>Chat
+                    </a>
+                {% else %}
+                    <button class="join-btn" onclick="joinGroup({{ group.id }})" style="min-width: 100px !important; max-width: 120px !important; padding: 0.6rem 1rem !important; font-size: 0.85rem !important; margin: 0 !important; flex-shrink: 0 !important; white-space: nowrap !important;">
+                        <i class="fas fa-plus me-1"></i>Join Group
+                    </button>
+                {% endif %}
+                <a href="{% url 'prediction_service:group_members' group.id %}" class="join-btn" style="min-width: 100px !important; max-width: 120px !important; padding: 0.6rem 1rem !important; font-size: 0.85rem !important; margin: 0 !important; flex-shrink: 0 !important; white-space: nowrap !important; text-decoration: none !important;">
+                    <i class="fas fa-users me-1"></i>Members
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Tabs -->
+<div class="content-tabs">
+    <ul class="nav nav-tabs" id="groupTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab">
+                <i class="fas fa-images me-2"></i>Posts ({{ posts_count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab">
+                <i class="fas fa-users me-2"></i>Members ({{ members_count }})
+            </button>
+        </li>
+        {% if is_member %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab">
+                <i class="fas fa-comments me-2"></i>Recent Chat
+            </button>
+        </li>
+        {% endif %}
+    </ul>
+
+    <div class="tab-content" id="groupTabsContent">
+        <!-- Posts Tab -->
+        <div class="tab-pane fade show active" id="posts" role="tabpanel">
+            {% if is_member %}
+                <div class="mb-4">
+                    <a href="{% url 'prediction_service:create_post' %}?group={{ group.id }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Share a Post
+                    </a>
+                </div>
+            {% endif %}
+
+            {% if posts %}
+                {% for post in posts %}
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="user-avatar">
+                            {{ post.user.username|first|upper }}
+                        </div>
+                        <div>
+                            <h6 class="mb-1 fw-bold">{{ post.user.username }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-paw me-1"></i>{{ post.cat.name }} • 
+                                <i class="fas fa-clock me-1"></i>{{ post.created_at|timesince }} ago
+                            </small>
+                        </div>
+                    </div>
+                    
+                    {% if post.caption %}
+                        <p class="mb-3">{{ post.caption }}</p>
+                    {% endif %}
+                    
+                    <img src="{{ post.image.url }}" alt="{{ post.cat.name }}" class="post-image">
+                    
+                    {% if post.emotion_tags %}
+                        <div class="mb-3">
+                            {% for emotion in post.emotion_tags %}
+                                <span class="badge bg-primary me-1">{{ emotion }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="post-actions">
+                        <button class="action-btn" onclick="toggleLike({{ post.id }})">
+                            <i class="fas fa-heart"></i>
+                            <span>{{ post.likes_count }}</span>
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-comment"></i>
+                            <span>{{ post.comments_count }}</span>
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-share"></i>
+                            <span>Share</span>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if posts.has_other_pages %}
+                <nav aria-label="Posts pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if posts.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ posts.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in posts.paginator.page_range %}
+                            {% if posts.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > posts.number|add:'-3' and num < posts.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if posts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ posts.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-images"></i>
+                    <h4>No Posts Yet</h4>
+                    {% if is_member %}
+                        <p>Be the first to share a photo of your cat in this group!</p>
+                        <a href="{% url 'prediction_service:create_post' %}?group={{ group.id }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Share First Post
+                        </a>
+                    {% else %}
+                        <p>Join the group to see posts and share your own!</p>
+                        <button class="btn btn-primary btn-lg" onclick="joinGroup({{ group.id }})">
+                            <i class="fas fa-plus me-2"></i>Join Group
+                        </button>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Members Tab -->
+        <div class="tab-pane fade" id="members" role="tabpanel">
+            {% if recent_members %}
+                <div class="members-grid">
+                    {% for member in recent_members %}
+                    <div class="member-card">
+                        <div class="member-avatar">
+                            {{ member.username|first|upper }}
+                        </div>
+                        <h6 class="fw-bold mb-2">{{ member.username }}</h6>
+                        <span class="role-badge role-{{ member.groupmembership.role }}">
+                            {{ member.groupmembership.get_role_display }}
+                        </span>
+                        <p class="text-muted small mt-2 mb-0">
+                            Joined {{ member.groupmembership.joined_at|timesince }} ago
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if members_count > 12 %}
+                    <div class="text-center mt-4">
+                        <a href="{% url 'prediction_service:group_members' group.id %}" class="btn btn-primary">
+                            <i class="fas fa-users me-2"></i>View All {{ members_count }} Members
+                        </a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h4>No Members Yet</h4>
+                    <p>Be the first to join this group!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Chat Tab -->
+        {% if is_member %}
+        <div class="tab-pane fade" id="chat" role="tabpanel">
+            {% if recent_messages %}
+                <div class="chat-preview">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-comments text-primary me-2"></i>Recent Messages
+                        </h5>
+                        <a href="{% url 'prediction_service:group_chat' group.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-expand me-2"></i>Open Full Chat
+                        </a>
+                    </div>
+                    
+                    {% for message in recent_messages %}
+                    <div class="chat-message">
+                        <div class="message-avatar">
+                            {{ message.sender.username|first|upper }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="small">{{ message.sender.username }}</strong>
+                                <small class="text-muted">{{ message.created_at|timesince }} ago</small>
+                            </div>
+                            <p class="mb-0 small">{{ message.content }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <h4>No Messages Yet</h4>
+                    <p>Start a conversation with group members!</p>
+                    <a href="{% url 'prediction_service:group_chat' group.id %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-comments me-2"></i>Open Chat
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Group membership functions
+function joinGroup(groupId) {
+    fetch(`/predictions/groups/${groupId}/join/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error joining group', 'error');
+    });
+}
+
+function leaveGroup(groupId) {
+    if (confirm('Are you sure you want to leave this group?')) {
+        fetch(`/predictions/groups/${groupId}/leave/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error leaving group', 'error');
+        });
+    }
+}
+
+function toggleLike(postId) {
+    fetch('/predictions/api/like/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            post_id: postId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update like count and button state
+            const likeBtn = event.target.closest('.action-btn');
+            const countSpan = likeBtn.querySelector('span');
+            const icon = likeBtn.querySelector('i');
+            
+            countSpan.textContent = data.likes_count;
+            if (data.liked) {
+                likeBtn.classList.add('liked');
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+            } else {
+                likeBtn.classList.remove('liked');
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+            }
+        }
+    })
+    .catch(error => {
+        showNotification('Error updating like', 'error');
+    });
+}
+
+// Utility functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 350px; max-width: 400px; border-radius: 16px;';
+    notification.innerHTML = `
+        <i class="fas fa-info-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 4000);
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animation to post cards
+    const postCards = document.querySelectorAll('.post-card');
+    postCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

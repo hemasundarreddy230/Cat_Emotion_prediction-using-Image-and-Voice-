@@ -1,0 +1,696 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ group.name }} Members - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .members-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .members-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .members-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        transform: rotate(45deg);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .group-info {
+        position: relative;
+        z-index: 1;
+    }
+
+    .group-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin-right: 1.5rem;
+    }
+
+    .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .members-content {
+        padding: 2rem;
+    }
+
+    .members-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 16px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary-color);
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .members-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .member-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .member-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+    }
+
+    .member-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .member-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 2rem;
+        margin: 0 auto 1.5rem;
+        position: relative;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .member-avatar.admin {
+        background: var(--danger-gradient);
+    }
+
+    .member-avatar.moderator {
+        background: var(--warning-gradient);
+    }
+
+    .member-info {
+        text-align: center;
+    }
+
+    .member-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 1rem;
+    }
+
+    .role-admin {
+        background: var(--danger-gradient);
+        color: white;
+    }
+
+    .role-moderator {
+        background: var(--warning-gradient);
+        color: white;
+    }
+
+    .role-member {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .member-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--gray-200);
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+
+    .joined-date {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .member-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        background: none;
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        padding: 0.5rem;
+        color: var(--gray-600);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .role-filter {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .filter-btn {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 25px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+        background: var(--primary-gradient);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .search-box {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .search-input {
+        border: 2px solid var(--gray-300);
+        border-radius: 25px;
+        padding: 0.75rem 1.25rem 0.75rem 3rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        width: 100%;
+    }
+
+    .search-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+        outline: none;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-500);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-500);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 2rem;
+        opacity: 0.5;
+    }
+
+    .online-indicator {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 20px;
+        height: 20px;
+        background: var(--success-color);
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    @keyframes shimmer {
+        0%, 100% { transform: rotate(45deg) translateX(-100%); }
+        50% { transform: rotate(45deg) translateX(100%); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .members-container {
+            border-radius: 16px;
+        }
+        
+        .members-header {
+            padding: 1.5rem;
+        }
+        
+        .group-avatar {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        
+        .members-content {
+            padding: 1.5rem;
+        }
+        
+        .members-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .member-card {
+            padding: 1.5rem;
+        }
+        
+        .member-avatar {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+        
+        .members-stats {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="members-container">
+    <!-- Members Header -->
+    <div class="members-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center group-info">
+                <div class="group-avatar">
+                    {% if group.cover_image %}
+                        <img src="{{ group.cover_image.url }}" alt="{{ group.name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px;">
+                    {% else %}
+                        <i class="fas fa-users"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h2 class="mb-1 fw-bold">{{ group.name }} Members</h2>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-tag me-1"></i>{{ group.get_group_type_display }}
+                        <span class="mx-2">•</span>
+                        <i class="fas fa-calendar me-1"></i>Created {{ group.created_at|timesince }} ago
+                    </p>
+                </div>
+            </div>
+            <div>
+                <a href="{% url 'prediction_service:group_detail' group.id %}" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>Back to Group
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Members Content -->
+    <div class="members-content">
+        <!-- Members Stats -->
+        <div class="members-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ memberships|length }}</span>
+                <span class="stat-label">Total Members</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ memberships|dictsort:"role"|dictsortreversed:"role"|slice:":1"|length|add:memberships|dictsort:"role"|slice:"1:2"|length }}</span>
+                <span class="stat-label">Admins & Mods</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ group.created_at|timesince|truncatewords:1 }}</span>
+                <span class="stat-label">Group Age</span>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="role-filter">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" id="memberSearch" placeholder="Search members...">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-md-end">
+                        <strong class="me-3">Filter by Role:</strong>
+                        <a href="#" class="filter-btn active" data-role="all">All</a>
+                        <a href="#" class="filter-btn" data-role="admin">Admins</a>
+                        <a href="#" class="filter-btn" data-role="moderator">Moderators</a>
+                        <a href="#" class="filter-btn" data-role="member">Members</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members Grid -->
+        {% if memberships %}
+            <div class="members-grid" id="membersGrid">
+                {% for membership in memberships %}
+                <div class="member-card" data-role="{{ membership.role }}" data-username="{{ membership.user.username|lower }}">
+                    <div class="member-avatar {{ membership.role }}">
+                        {{ membership.user.username|first|upper }}
+                        {% if membership.role == 'admin' %}
+                            <div class="online-indicator"></div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="member-info">
+                        <h5 class="member-name">{{ membership.user.username }}</h5>
+                        
+                        <div class="role-badge role-{{ membership.role }}">
+                            {% if membership.role == 'admin' %}
+                                <i class="fas fa-crown"></i>
+                            {% elif membership.role == 'moderator' %}
+                                <i class="fas fa-shield-alt"></i>
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
+                            {{ membership.get_role_display }}
+                        </div>
+                        
+                        {% if membership.user.first_name or membership.user.last_name %}
+                            <p class="text-muted mb-2">{{ membership.user.first_name }} {{ membership.user.last_name }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="member-meta">
+                        <div class="joined-date">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>{{ membership.joined_at|timesince }} ago</span>
+                        </div>
+                        
+                        {% if can_manage and membership.user != user %}
+                            <div class="member-actions">
+                                <button class="action-btn" title="Send Message" onclick="sendMessage('{{ membership.user.username }}')">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <button class="action-btn" title="View Profile" onclick="viewProfile('{{ membership.user.username }}')">
+                                    <i class="fas fa-user"></i>
+                                </button>
+                                {% if user_membership.role == 'admin' and membership.role != 'admin' %}
+                                    <button class="action-btn" title="Manage Role" onclick="manageRole({{ membership.user.id }}, '{{ membership.role }}')">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        {% elif membership.user != user %}
+                            <div class="member-actions">
+                                <button class="action-btn" title="View Profile" onclick="viewProfile('{{ membership.user.username }}')">
+                                    <i class="fas fa-user"></i>
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h4>No Members Found</h4>
+                <p>This group doesn't have any members yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Role Management Modal -->
+{% if user_membership.role == 'admin' %}
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Member Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Change role for <strong id="targetUsername"></strong>:</p>
+                <div class="role-options">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="newRole" value="member" id="roleMember">
+                        <label class="form-check-label" for="roleMember">
+                            <i class="fas fa-user me-2"></i>Member
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="newRole" value="moderator" id="roleModerator">
+                        <label class="form-check-label" for="roleModerator">
+                            <i class="fas fa-shield-alt me-2"></i>Moderator
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateRole()">Update Role</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const memberSearch = document.getElementById('memberSearch');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const memberCards = document.querySelectorAll('.member-card');
+    
+    let currentRoleFilter = 'all';
+    let currentSearchTerm = '';
+
+    // Search functionality
+    memberSearch.addEventListener('input', function() {
+        currentSearchTerm = this.value.toLowerCase();
+        filterMembers();
+    });
+
+    // Role filter functionality
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Update active filter
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            currentRoleFilter = this.dataset.role;
+            filterMembers();
+        });
+    });
+
+    // Filter members based on search and role
+    function filterMembers() {
+        memberCards.forEach(card => {
+            const username = card.dataset.username;
+            const role = card.dataset.role;
+            
+            const matchesSearch = username.includes(currentSearchTerm);
+            const matchesRole = currentRoleFilter === 'all' || role === currentRoleFilter;
+            
+            if (matchesSearch && matchesRole) {
+                card.style.display = 'block';
+                card.style.animation = 'fadeInUp 0.3s ease-out';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Show empty state if no results
+        const visibleCards = Array.from(memberCards).filter(card => card.style.display !== 'none');
+        const emptyState = document.querySelector('.empty-state');
+        
+        if (visibleCards.length === 0 && !emptyState) {
+            const grid = document.getElementById('membersGrid');
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'empty-state col-12';
+            emptyDiv.innerHTML = `
+                <i class="fas fa-search"></i>
+                <h4>No Members Found</h4>
+                <p>No members match your current search and filter criteria.</p>
+            `;
+            grid.appendChild(emptyDiv);
+        } else if (visibleCards.length > 0 && emptyState) {
+            emptyState.remove();
+        }
+    }
+
+    // Add staggered animation to member cards
+    memberCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 50);
+    });
+});
+
+// Member action functions
+function sendMessage(username) {
+    // Redirect to chat or open message modal
+    showNotification(`Message feature coming soon for ${username}`, 'info');
+}
+
+function viewProfile(username) {
+    // Redirect to user profile
+    window.location.href = `/predictions/profile/${username}/`;
+}
+
+let targetUserId = null;
+
+function manageRole(userId, currentRole) {
+    targetUserId = userId;
+    const modal = new bootstrap.Modal(document.getElementById('roleModal'));
+    
+    // Set current role
+    document.querySelector(`input[value="${currentRole}"]`).checked = true;
+    
+    modal.show();
+}
+
+function updateRole() {
+    const newRole = document.querySelector('input[name="newRole"]:checked')?.value;
+    
+    if (!newRole || !targetUserId) {
+        showNotification('Please select a role', 'error');
+        return;
+    }
+    
+    // Here you would make an API call to update the role
+    // For now, just show a notification
+    showNotification('Role management feature coming soon', 'info');
+    
+    // Close modal
+    bootstrap.Modal.getInstance(document.getElementById('roleModal')).hide();
+}
+
+// Utility function
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 350px; max-width: 400px; border-radius: 16px;';
+    notification.innerHTML = `
+        <i class="fas fa-info-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 4000);
+}
+</script>
+{% endblock %}

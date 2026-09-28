@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Prediction Tab - CatCare AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .prediction-tab-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95));
+        backdrop-filter: blur(10px);
+        border-radius: 25px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .prediction-tab-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+    }
+
+    .prediction-button {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        border-radius: 20px;
+        padding: 2rem;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-bottom: 2rem;
+        text-decoration: none;
+    }
+
+    .prediction-button:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .prediction-button i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .prediction-button.image-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .prediction-button.audio-btn {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .selected-cats-display {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .cat-badge {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        margin: 0.25rem;
+        font-weight: 500;
+    }
+
+    .cat-avatar-small {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 0.5rem;
+        border: 2px solid white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center mb-4">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-brain text-primary"></i>
+                Quick Prediction
+            </h1>
+            <p class="lead">Choose your prediction method for selected cats</p>
+        </div>
+    </div>
+</div>
+
+<!-- Selected Cats Display -->
+{% if selected_cats %}
+<div class="row">
+    <div class="col-12">
+        <div class="selected-cats-display">
+            <h5 class="mb-3">
+                <i class="fas fa-check-circle text-success"></i>
+                Selected Cats ({{ selected_cats.count }})
+            </h5>
+            <div class="d-flex flex-wrap">
+                {% for cat in selected_cats %}
+                <div class="cat-badge">
+                    {% if cat.photo %}
+                        <img src="{{ cat.photo.url }}" alt="{{ cat.name }}" class="cat-avatar-small">
+                    {% else %}
+                        <div class="cat-avatar-small bg-white d-flex align-items-center justify-content-center">
+                            <i class="fas fa-cat" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                        </div>
+                    {% endif %}
+                    {{ cat.name }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prediction Buttons -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="prediction-tab-card">
+            <a href="{% url 'emotion_detection:detection' %}#image-detection" class="prediction-button image-btn">
+                <i class="fas fa-camera"></i>
+                <div>_Image Detection</div>
+                <small>Upload cat photos for emotion analysis</small>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="prediction-tab-card">
+            <a href="{% url 'emotion_detection:detection' %}#audio-detection" class="prediction-button audio-btn">
+                <i class="fas fa-microphone"></i>
+                <div>Audio Detection</div>
+                <small>Upload cat sounds for emotion analysis</small>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Instructions -->
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5><i class="fas fa-info-circle"></i> How to Use</h5>
+            <ol class="mb-0">
+                <li>Your selected cats are shown above</li>
+                <li>Choose Image or Audio detection method</li>
+                <li>Upload your file on the detection page</li>
+                <li>Get predictions for all selected cats</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-warning text-center">
+            <h4><i class="fas fa-exclamation-triangle"></i> No Cats Selected</h4>
+            <p>Please go back and select at least one cat for prediction.</p>
+            <a href="{% url 'emotion_detection:detection' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Selection
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

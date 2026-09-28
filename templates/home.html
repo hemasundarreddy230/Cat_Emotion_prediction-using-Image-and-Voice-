@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CatCare AI - Advanced Cat Emotion Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated Background with Image */
+        .animated-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            background-image: url('/media/catback.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+        }
+
+        .animated-bg::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 50%, rgba(240, 147, 251, 0.8) 100%);
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.3;
+        }
+
+        @keyframes gradientShift {
+            0% { 
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 50%, rgba(240, 147, 251, 0.8) 100%);
+            }
+            50% { 
+                background: linear-gradient(135deg, rgba(240, 147, 251, 0.8) 0%, rgba(102, 126, 234, 0.8) 50%, rgba(118, 75, 162, 0.8) 100%);
+            }
+            100% { 
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 50%, rgba(240, 147, 251, 0.8) 100%);
+            }
+        }
+
+        /* Floating Particles */
+        .particle {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 20s infinite;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+        }
+
+        /* Hero Section */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 2rem;
+        }
+
+        .hero-content {
+            text-align: center;
+            color: white;
+            z-index: 10;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 0.95; }
+        }
+
+        /* Cat Image Container */
+        .cat-showcase {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+
+        .cat-card {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: floatCat 3s ease-in-out infinite;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cat-card:nth-child(1) { 
+            animation-delay: 0s;
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+        .cat-card:nth-child(2) { 
+            animation-delay: 0.5s;
+            border-color: rgba(240, 147, 251, 0.5);
+        }
+        .cat-card:nth-child(3) { 
+            animation-delay: 1s;
+            border-color: rgba(67, 233, 123, 0.5);
+        }
+
+        @keyframes floatCat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        .cat-card:hover {
+            transform: scale(1.1) rotate(10deg);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 15px 50px rgba(255,255,255,0.4);
+        }
+
+        .cat-card:nth-child(1):hover {
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.6);
+        }
+        
+        .cat-card:nth-child(2):hover {
+            box-shadow: 0 15px 50px rgba(240, 147, 251, 0.6);
+        }
+        
+        .cat-card:nth-child(3):hover {
+            box-shadow: 0 15px 50px rgba(67, 233, 123, 0.6);
+        }
+
+        .cat-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cat-emoji {
+            font-size: 150px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+
+        /* CTA Buttons */
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .cta-btn {
+            padding: 1.2rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .cta-btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .cta-btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+        }
+
+        .cta-btn-secondary:hover {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(240, 147, 251, 0.6);
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 5rem 2rem;
+            background: transparent;
+            position: relative;
+            z-index: 5;
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            color: white;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            animation: gradientText 5s ease infinite;
+        }
+
+        @keyframes gradientText {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            animation: slideInUp 0.8s ease-out;
+            animation-fill-mode: both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:nth-child(1)::before { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .feature-card:nth-child(2)::before { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .feature-card:nth-child(3)::before { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .feature-card:nth-child(4)::before { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .feature-card:nth-child(5)::before { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .feature-card:nth-child(6)::before { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }
+
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+        .feature-card:nth-child(4) { animation-delay: 0.4s; }
+        .feature-card:nth-child(5) { animation-delay: 0.5s; }
+        .feature-card:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .feature-card:nth-child(1):hover {
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.4);
+        }
+        
+        .feature-card:nth-child(2):hover {
+            box-shadow: 0 20px 50px rgba(240, 147, 251, 0.4);
+        }
+        
+        .feature-card:nth-child(3):hover {
+            box-shadow: 0 20px 50px rgba(79, 172, 254, 0.4);
+        }
+        
+        .feature-card:nth-child(4):hover {
+            box-shadow: 0 20px 50px rgba(67, 233, 123, 0.4);
+        }
+        
+        .feature-card:nth-child(5):hover {
+            box-shadow: 0 20px 50px rgba(250, 112, 154, 0.4);
+        }
+        
+        .feature-card:nth-child(6):hover {
+            box-shadow: 0 20px 50px rgba(255, 107, 107, 0.4);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: white;
+            animation: iconPulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .feature-card:nth-child(1) .feature-icon { color: #667eea; }
+        .feature-card:nth-child(2) .feature-icon { color: #f093fb; }
+        .feature-card:nth-child(3) .feature-icon { color: #4facfe; }
+        .feature-card:nth-child(4) .feature-icon { color: #43e97b; }
+        .feature-card:nth-child(5) .feature-icon { color: #fa709a; }
+        .feature-card:nth-child(6) .feature-icon { color: #ff6b6b; }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-description {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 4rem 2rem;
+            background: rgba(102, 126, 234, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+            text-align: center;
+        }
+
+        .stat-item {
+            animation: countUp 2s ease-out;
+            position: relative;
+        }
+
+        .stat-item:nth-child(1)::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            border-radius: 2px;
+        }
+
+        .stat-item:nth-child(2)::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 2px;
+        }
+
+        .stat-item:nth-child(3)::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 2px;
+        }
+
+        .stat-item:nth-child(4)::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            border-radius: 2px;
+        }
+
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: scrollBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes scrollBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        .scroll-indicator i {
+            font-size: 2rem;
+            color: white;
+            opacity: 0.7;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .cat-card {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .cta-btn {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+            
+            .home-navbar {
+                padding: 1rem 0;
+            }
+            
+            .home-nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .home-nav-links {
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+            }
+            
+            .home-nav-link {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* Home Page Navigation */
+        .home-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 1.5rem 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .home-navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .home-nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .home-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: all 0.3s ease;
+        }
+
+        .home-brand:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        .home-brand-icon {
+            font-size: 2.5rem;
+            animation: float 3s ease-in-out infinite;
+            filter: none;
+            -webkit-text-fill-color: initial;
+        }
+
+        .home-nav-links {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .home-nav-link {
+            padding: 0.75rem 1.25rem;
+            border-radius: 50px;
+            text-decoration: none;
+            color: #495057;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .home-nav-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .home-nav-link.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .home-nav-link.primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            transform: translateY(-3px);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+
+    <!-- Navigation Header -->
+    <nav class="home-navbar" id="homeNavbar">
+        <div class="home-nav-container">
+            <a href="/" class="home-brand">
+                <span class="home-brand-icon"></span>
+                <span>CatCare AI 🐱</span>
+            </a>
+            
+            {% if user.is_authenticated %}
+                <!-- Full Navigation for Logged-in Users -->
+                <div class="home-nav-links">
+                    <a href="{% url 'dashboard:home' %}" class="home-nav-link">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                    <a href="{% url 'emotion_detection:detection' %}" class="home-nav-link">
+                        <i class="fas fa-brain me-1"></i>AI Detection
+                    </a>
+                    <a href="{% url 'prediction_service:community_feed' %}" class="home-nav-link">
+                        <i class="fas fa-users me-1"></i>Community
+                    </a>
+                    <a href="{% url 'ai_assistant:chat' %}" class="home-nav-link">
+                        <i class="fas fa-robot me-1"></i>AI Assistant
+                    </a>
+                    <a href="{% url 'cat_profiles:list' %}" class="home-nav-link">
+                        <i class="fas fa-paw me-1"></i>My Cats
+                    </a>
+                    <a href="{% url 'prediction_service:veterinary_map' %}" class="home-nav-link">
+                        <i class="fas fa-map-marked-alt me-1"></i>Vet Map
+                    </a>
+                    <a href="{% url 'logout_confirm' %}" class="home-nav-link primary">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </div>
+            {% else %}
+                <!-- Guest Navigation -->
+                <div class="home-nav-links">
+                    <a href="#features" class="home-nav-link">Features</a>
+                    <a href="#stats" class="home-nav-link">About</a>
+                    <a href="{% url 'login' %}" class="home-nav-link">Login</a>
+                    <a href="{% url 'register' %}" class="home-nav-link primary">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Floating Particles -->
+    <script>
+        for(let i = 0; i < 20; i++) {
+            let particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+            document.body.appendChild(particle);
+        }
+    </script>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                {% if user.is_authenticated %}
+                    🐱 Welcome back, {{ user.first_name|default:user.username }}!
+                {% else %}
+                    🐱 CatCare AI
+                {% endif %}
+            </h1>
+            <p class="hero-subtitle">
+                {% if user.is_authenticated %}
+                    Your AI-Powered Cat Care Dashboard
+                {% else %}
+                    Advanced AI-Powered Cat Emotion Detection & Care Platform
+                {% endif %}
+            </p>
+
+            <!-- Cat Showcase -->
+            <div class="cat-showcase">
+                <div class="cat-card">
+                    <img src="/media/cat-logo.png" alt="Cat Logo" style="width: 100%; height: 100%; object-fit: contain; padding: 20px;">
+                </div>
+                
+            </div>
+
+            <!-- CTA Buttons -->
+            <div class="cta-buttons">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard:home' %}" class="cta-btn cta-btn-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                    </a>
+                    <a href="{% url 'emotion_detection:detection' %}" class="cta-btn cta-btn-secondary">
+                        <i class="fas fa-brain me-2"></i>Detect Emotion
+                    </a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="cta-btn cta-btn-primary">
+                        <i class="fas fa-rocket me-2"></i>Get Started
+                    </a>
+                    <a href="{% url 'login' %}" class="cta-btn cta-btn-secondary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="scroll-indicator">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+        <div class="features-container">
+            <h2 class="section-title">🌟 Amazing Features</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="feature-title">AI Emotion Detection</h3>
+                    <p class="feature-description">
+                        Advanced machine learning algorithms analyze your cat's facial expressions and vocalizations to detect emotions accurately.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h3 class="feature-title">Image Analysis</h3>
+                    <p class="feature-description">
+                        Upload photos of your cat and get instant emotion predictions with detailed confidence scores.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <h3 class="feature-title">Audio Detection</h3>
+                    <p class="feature-description">
+                        Analyze your cat's meows, purrs, and other sounds to understand their emotional state.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Veterinary Map</h3>
+                    <p class="feature-description">
+                        Find nearby veterinary clinics with real-time distance calculation and reviews.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">Community</h3>
+                    <p class="feature-description">
+                        Connect with other cat owners, share experiences, and join groups for cat lovers.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Health Tracking</h3>
+                    <p class="feature-description">
+                        Monitor your cat's emotional patterns and health alerts over time with detailed analytics.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section" id="stats">
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-number">{{ total_cats|default:"0" }}+</div>
+                <div class="stat-label">Happy Cats</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ accuracy|default:"85" }}%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ total_predictions|default:"0" }}+</div>
+                <div class="stat-label">Predictions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Support</div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Navbar Scroll Effect -->
+    <script>
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('homeNavbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
